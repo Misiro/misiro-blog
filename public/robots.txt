@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://misiro.pages.dev/sitemap-index.xml
+Sitemap: https://blog.misiro.space/sitemap-index.xml

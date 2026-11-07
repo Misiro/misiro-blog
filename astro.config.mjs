@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://misiro.pages.dev',
+  site: 'https://blog.misiro.space',
   output: 'static',
   integrations: [
     sitemap({

@@ -4,7 +4,7 @@ export const SITE = {
   tagline: '把构建当作作品。',
   description:
     'MISIRO 是一个关于构建管线、性能预算与界面实验的技术日志。纯静态、无后端、可被搜索。',
-  url: 'https://misiro.pages.dev',
+  url: 'https://blog.misiro.space',
   author: 'MISIRO',
   startYear: 2026,
   github: 'https://github.com/misiro',
