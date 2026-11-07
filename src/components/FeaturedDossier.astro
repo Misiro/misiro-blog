@@ -1,0 +1,153 @@
+---
+import type { Post } from '../lib/content';
+import { formatDate } from '../lib/format';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+---
+
+<aside class="dossier panel">
+  <span class="hud-corner hud-corner--tl" aria-hidden="true"></span>
+  <span class="hud-corner hud-corner--tr" aria-hidden="true"></span>
+  <span class="hud-corner hud-corner--bl" aria-hidden="true"></span>
+  <span class="hud-corner hud-corner--br" aria-hidden="true"></span>
+
+  <div class="dossier__top">
+    <span class="mono dossier__file">FILE 001 / FEATURED</span>
+    <span class="dossier__cat">{post.data.category}</span>
+  </div>
+
+  <h2 class="dossier__title">
+    <a class="glitch" href={`/posts/${post.id}/`} data-post-link>
+      <span data-post-title>{post.data.title}</span>
+    </a>
+  </h2>
+
+  <p class="dossier__desc">{post.data.description}</p>
+
+  <div class="dossier__meta mono">
+    <span>{formatDate(post.data.pubDate)}</span>
+    <span>{post.data.tags.slice(0, 3).join(' · ')}</span>
+  </div>
+
+  <svg class="dossier__graphic" viewBox="0 0 400 160" aria-hidden="true">
+    <g stroke="var(--line-strong)" fill="none">
+      <path d="M0 40h400M0 80h400M0 120h400"></path>
+      <path d="M40 0v160M120 0v160M200 0v160M280 0v160M360 0v160"></path>
+    </g>
+    <circle cx="280" cy="80" r="56" fill="none" stroke="var(--accent)" stroke-width="2"></circle>
+    <circle cx="280" cy="80" r="30" fill="none" stroke="var(--text-muted)"></circle>
+    <path d="M0 160 120 40" stroke="var(--text-muted)" stroke-width="1"></path>
+    <rect x="24" y="96" width="84" height="10" fill="var(--accent-3)"></rect>
+    <text x="24" y="26" font-family="monospace" font-size="9" fill="var(--text-muted)">
+      SYS / READY
+    </text>
+  </svg>
+
+  <a class="dossier__link" href={`/posts/${post.id}/`} data-post-link>
+    <span>READ FILE</span>
+    <span aria-hidden="true">→</span>
+  </a>
+</aside>
+
+<style>
+  .dossier {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 22px;
+    background: var(--bg-elevated);
+  }
+
+  .dossier::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 64px;
+    background: var(--accent);
+  }
+
+  .dossier__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dossier__file {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .dossier__cat {
+    padding: 2px 8px;
+    border: 1px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--accent-text);
+  }
+
+  .dossier__title {
+    margin-top: 18px;
+    font-size: clamp(24px, 2.6vw, 34px);
+    line-height: 1.18;
+  }
+
+  .dossier__title a:hover {
+    color: var(--accent-text);
+  }
+
+  .dossier__desc {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-muted);
+  }
+
+  .dossier__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 18px;
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .dossier__graphic {
+    width: 100%;
+    height: auto;
+    margin: 22px 0 4px;
+  }
+
+  .dossier__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent-text);
+  }
+
+  .dossier__link:hover span:last-child {
+    transform: translateX(4px);
+  }
+
+  .dossier__link span:last-child {
+    transition: transform var(--dur-2) var(--ease-quart);
+  }
+</style>

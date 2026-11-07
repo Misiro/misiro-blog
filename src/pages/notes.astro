@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import NoteItem from '../components/NoteItem.astro';
+import { getNotes } from '../lib/content';
+import { formatDate, padNumber } from '../lib/format';
+
+const notes = await getNotes();
+---
+
+<BaseLayout title="手记" description="短内容、片段与构建日志。">
+  <div data-pagefind-body>
+    <section class="page-hero">
+      <div class="container">
+        <span class="sticker">NOTES / 手记</span>
+        <h1 class="page-hero__title glitch" data-pagefind-meta="title">手记</h1>
+        <p class="page-hero__desc">
+          {padNumber(notes.length, 2)} 条短内容。没有评论区，没有点赞，读完之后可以直接关掉。
+        </p>
+        <span class="sr-only" data-pagefind-meta="type:手记">手记</span>
+        {
+          notes[0] && (
+            <span class="sr-only" data-pagefind-meta={`date:${formatDate(notes[0].data.date)}`}>
+              {formatDate(notes[0].data.date)}
+            </span>
+          )
+        }
+      </div>
+    </section>
+
+    <div class="container">
+      <div class="note-list">
+        {notes.map((note) => <NoteItem note={note} />)}
+      </div>
+    </div>
+  </div>
+</BaseLayout>

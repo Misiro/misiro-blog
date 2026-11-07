@@ -1,0 +1,382 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ReadingProgress from '../components/ReadingProgress.astro';
+import Toc from '../components/Toc.astro';
+import type { Post } from '../lib/content';
+import { readingTime } from '../lib/content';
+import { isoDate, formatDate } from '../lib/format';
+import { SITE } from '../lib/site';
+
+interface Props {
+  post: Post;
+  related: Post[];
+  newer?: Post;
+  older?: Post;
+}
+
+const { post, related, newer, older } = Astro.props;
+
+const title = post.data.title;
+const minutes = readingTime(post);
+const tags = post.data.tags;
+const tagNames = tags.map((tag) => tag);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description: post.data.description,
+  datePublished: isoDate(post.data.pubDate),
+  dateModified: isoDate(post.data.updatedDate ?? post.data.pubDate),
+  author: { '@type': 'Person', name: SITE.author },
+  publisher: { '@type': 'Organization', name: SITE.name },
+  mainEntityOfPage: new URL(`/posts/${post.id}/`, SITE.url).toString(),
+  image: new URL(post.data.cover ?? '/og-default.svg', SITE.url).toString(),
+  keywords: tags.join(', '),
+};
+---
+
+<BaseLayout
+  title={title}
+  description={post.data.description}
+  type="article"
+  image={post.data.cover}
+  jsonLd={jsonLd}
+>
+  <ReadingProgress />
+
+  <article class="post" data-pagefind-body>
+    <header class="container post-head">
+      <nav class="crumbs mono" aria-label="面包屑">
+        <a href="/">首页</a>
+        <span aria-hidden="true">/</span>
+        <a href={`/categories/${encodeURIComponent(post.data.category)}/`}>{post.data.category}</a>
+        <span aria-hidden="true">/</span>
+        <span class="crumbs__now">POST</span>
+      </nav>
+
+      <h1 class="post-title glitch" data-pagefind-meta="title">{title}</h1>
+
+      <div class="meta-line post-meta">
+        <time datetime={isoDate(post.data.pubDate)} data-pagefind-meta={`date:${formatDate(post.data.pubDate)}`}>
+          {formatDate(post.data.pubDate)}
+        </time>
+        <span>阅读约 {minutes} 分钟</span>
+        <span>分类 / {post.data.category}</span>
+        <span data-pagefind-meta="type:文章">文章</span>
+      </div>
+
+      <p class="post-desc">{post.data.description}</p>
+
+      {
+        tags.length > 0 && (
+          <div class="post-tags">
+            {tagNames.map((tag) => (
+              <a class="post-tag mono" href={`/tags/${encodeURIComponent(tag)}/`}>
+                #{tag}
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    <div class="container post-grid">
+      <div class="prose post-body" data-post-body>
+        <slot />
+      </div>
+      <Toc />
+    </div>
+
+    <footer class="container post-foot">
+      <div class="post-license mono">
+        本文采用 CC BY-NC-SA 4.0 协议，转载请注明出处。
+      </div>
+
+      <nav class="post-nav" aria-label="上一篇与下一篇">
+        {
+          older ? (
+            <a class="post-nav__item" href={`/posts/${older.id}/`}>
+              <span class="mono">← 下一篇</span>
+              <span class="post-nav__title">{older.data.title}</span>
+            </a>
+          ) : (
+            <span class="post-nav__empty mono">已是最后一篇</span>
+          )
+        }
+        {
+          newer ? (
+            <a class="post-nav__item post-nav__item--end" href={`/posts/${newer.id}/`}>
+              <span class="mono">上一篇 →</span>
+              <span class="post-nav__title">{newer.data.title}</span>
+            </a>
+          ) : (
+            <span class="post-nav__empty mono">已是最新一篇</span>
+          )
+        }
+      </nav>
+
+      {
+        related.length > 0 && (
+          <section class="related">
+            <div class="related__head">
+              <span class="mono">RELATED / 相关文章</span>
+              <a class="mono related__all" href="/archives">
+                全部存档 ↗
+              </a>
+            </div>
+            <div class="related__list">
+              {related.map((item, index) => (
+                <a class="related__item" href={`/posts/${item.id}/`} data-post-link>
+                  <span class="mono related__num">{String(index + 1).padStart(2, '0')}</span>
+                  <span class="related__title" data-post-title>{item.data.title}</span>
+                  <span class="mono related__date">{formatDate(item.data.pubDate)}</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )
+      }
+
+      <div class="post-rss">
+        <div>
+          <span class="mono post-rss__label">RSS / 订阅</span>
+          <p class="post-rss__text">读完这一篇，把下一批文章放进你的阅读器。</p>
+        </div>
+        <a class="btn btn--ghost" href="/rss.xml"><span>订阅 RSS</span><span class="btn__arrow">↗</span></a>
+      </div>
+    </footer>
+  </article>
+
+  <script>
+    import '../scripts/post';
+  </script>
+</BaseLayout>
+
+<style>
+  .post {
+    padding-top: clamp(36px, 6vw, 72px);
+  }
+
+  .post-head {
+    max-width: 1012px;
+  }
+
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .crumbs a:hover {
+    color: var(--accent-text);
+  }
+
+  .crumbs__now {
+    color: var(--accent-text);
+  }
+
+  .post-title {
+    margin-top: 24px;
+    max-width: 18ch;
+    font-size: clamp(34px, 4.6vw, 56px);
+    line-height: 1.04;
+  }
+
+  .post-meta {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .post-desc {
+    margin-top: 24px;
+    max-width: 62ch;
+    padding: 14px 18px;
+    border-left: 3px solid var(--accent);
+    background: var(--bg-elevated);
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-muted);
+  }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .post-tag {
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 10px;
+    transition:
+      color var(--dur-1),
+      border-color var(--dur-1);
+  }
+
+  .post-tag:hover {
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  .post-grid {
+    display: flex;
+    justify-content: center;
+    gap: 64px;
+    margin-top: clamp(36px, 5vw, 56px);
+  }
+
+  .post-body {
+    width: 100%;
+    max-width: var(--prose-width);
+  }
+
+  .post-foot {
+    max-width: 1012px;
+    margin-top: clamp(56px, 8vw, 96px);
+  }
+
+  .post-license {
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .post-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin-top: 32px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .post-nav__item,
+  .post-nav__empty {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px;
+    background: var(--bg-elevated);
+  }
+
+  .post-nav__item {
+    transition: background var(--dur-2) var(--ease-quart);
+  }
+
+  .post-nav__item:hover {
+    background: var(--bg-elevated-2);
+  }
+
+  .post-nav__item--end {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .post-nav__title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    line-height: 1.35;
+  }
+
+  .post-nav__empty {
+    color: var(--text-muted);
+  }
+
+  .related {
+    margin-top: 48px;
+  }
+
+  .related__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .related__all {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .related__all:hover {
+    color: var(--accent-text);
+  }
+
+  .related__item {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: baseline;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+    transition: transform var(--dur-1) var(--ease-quart);
+  }
+
+  .related__item:hover {
+    transform: translateX(4px);
+  }
+
+  .related__num,
+  .related__date {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .related__title {
+    font-family: var(--font-display);
+    font-size: 18px;
+  }
+
+  .post-rss {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-top: 48px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+  }
+
+  .post-rss__label {
+    color: var(--accent-text);
+    font-size: 10px;
+  }
+
+  .post-rss__text {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  @media (max-width: 640px) {
+    .post-nav {
+      grid-template-columns: 1fr;
+    }
+
+    .post-nav__item--end {
+      text-align: left;
+      align-items: flex-start;
+    }
+
+    .related__item {
+      grid-template-columns: 28px minmax(0, 1fr);
+    }
+
+    .related__date {
+      grid-column: 2;
+    }
+  }
+</style>

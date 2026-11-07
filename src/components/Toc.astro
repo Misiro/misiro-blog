@@ -1,0 +1,35 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'INDEX / 目录' } = Astro.props;
+---
+
+<aside class="post-aside">
+  <div class="toc panel" data-toc>
+    <div class="toc__head mono">{title}</div>
+    <ol class="toc__list" data-toc-list></ol>
+  </div>
+</aside>
+
+<style>
+  .post-aside {
+    display: none;
+  }
+
+  @media (min-width: 1025px) {
+    .post-aside {
+      display: block;
+      width: 220px;
+      flex-shrink: 0;
+    }
+
+    .toc {
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+      max-height: calc(100vh - var(--header-h) - 48px);
+      overflow-y: auto;
+    }
+  }
+</style>

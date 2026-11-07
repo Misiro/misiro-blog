@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import IndexRow from '../../components/IndexRow.astro';
+import { getPosts, tagCounts } from '../../lib/content';
+import { padNumber } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return tagCounts(posts).map((tag) => ({
+    params: { name: tag.name },
+    props: {
+      name: tag.name,
+      posts: posts.filter((post) => post.data.tags.includes(tag.name)),
+    },
+  }));
+}
+
+const { name, posts } = Astro.props;
+---
+
+<BaseLayout title={`标签：${name}`} description={`标签「${name}」下的全部文章。`}>
+  <section class="page-hero">
+    <div class="container">
+      <nav class="crumbs mono" aria-label="面包屑">
+        <a href="/tags">标签</a>
+        <span aria-hidden="true">/</span>
+        <span class="crumbs__now">#{name}</span>
+      </nav>
+      <h1 class="page-hero__title glitch">#{name}</h1>
+      <p class="page-hero__desc">{padNumber(posts.length, 2)} 篇文章带有这个标签。</p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="index-list">
+      {posts.map((post, index) => <IndexRow post={post} index={index + 1} showDesc />)}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .crumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .crumbs__now {
+    color: var(--accent-text);
+  }
+</style>

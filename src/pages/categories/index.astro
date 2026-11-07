@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, categoryCounts } from '../../lib/content';
+import { formatDate, padNumber } from '../../lib/format';
+
+const posts = await getPosts();
+const categories = categoryCounts(posts);
+---
+
+<BaseLayout title="分类" description="按主题分类浏览 MISIRO 的文章。">
+  <section class="page-hero">
+    <div class="container">
+      <span class="sticker">CATEGORIES / 分类</span>
+      <h1 class="page-hero__title glitch">分类</h1>
+      <p class="page-hero__desc">按主题归档。每一类都附上最新一篇，方便快速判断是否值得读。</p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="cat-list">
+      {
+        categories.map((category) => (
+          <a
+            class="cat-row"
+            href={`/categories/${encodeURIComponent(category.name)}/`}
+          >
+            <span class="cat-row__name">{category.name}</span>
+            <span class="cat-row__count mono">{padNumber(category.count, 2)} POSTS</span>
+            <span class="cat-row__latest">{category.latest.data.title}</span>
+            <span class="cat-row__date mono">{formatDate(category.latest.data.pubDate)}</span>
+            <span class="cat-row__arrow" aria-hidden="true">→</span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .cat-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+  }
+
+  .cat-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 180px) 90px minmax(0, 1fr) 90px 20px;
+    gap: 16px;
+    align-items: baseline;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--line);
+    transition: transform var(--dur-1) var(--ease-quart);
+  }
+
+  .cat-row:hover {
+    transform: translateX(4px);
+  }
+
+  .cat-row__name {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.4vw, 28px);
+  }
+
+  .cat-row__count,
+  .cat-row__date {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .cat-row__latest {
+    font-size: 14px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cat-row__arrow {
+    color: var(--accent-text);
+  }
+
+  @media (max-width: 768px) {
+    .cat-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .cat-row__count,
+    .cat-row__date,
+    .cat-row__arrow {
+      display: none;
+    }
+
+    .cat-row__latest {
+      grid-column: 1 / -1;
+      font-size: 13px;
+    }
+  }
+</style>

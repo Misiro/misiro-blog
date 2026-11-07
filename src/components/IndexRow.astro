@@ -1,0 +1,30 @@
+---
+import type { Post } from '../lib/content';
+import { formatDate, padNumber } from '../lib/format';
+
+interface Props {
+  post: Post;
+  index: number;
+  showDesc?: boolean;
+  intro?: boolean;
+}
+
+const { post, index, showDesc = false, intro = false } = Astro.props;
+---
+
+<a
+  class="index-row"
+  href={`/posts/${post.id}/`}
+  data-post-link
+  data-intro-row={intro ? 'true' : undefined}
+>
+  <span class="index-row__num">{padNumber(index)}</span>
+  <span class="index-row__main">
+    <span class="index-row__title" data-post-title>{post.data.title}</span>
+    {showDesc && <span class="index-row__desc">{post.data.description}</span>}
+  </span>
+  <span class="index-row__side">
+    <span>{formatDate(post.data.pubDate)}</span>
+    <span class="index-row__tags">{post.data.tags.slice(0, 2).join(' / ')}</span>
+  </span>
+</a>

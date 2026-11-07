@@ -1,0 +1,133 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPosts } from '../lib/content';
+
+const posts = await getPosts();
+const latest = posts[0];
+---
+
+<BaseLayout title="404 — 信号丢失" description="请求的地址不存在，返回首页或站内搜索。" noindex>
+  <section class="notfound halftone">
+    <div class="container notfound__inner">
+      <span class="sticker sticker--magenta">SIGNAL LOST / 404</span>
+
+      <h1 class="notfound__code glitch" aria-label="404">404</h1>
+
+      <div class="notfound__rule" aria-hidden="true"></div>
+
+      <p class="notfound__text">
+        这个地址没有对应内容。可能是链接写错、文章被移动，或者它从来就不存在。
+      </p>
+
+      <div class="notfound__actions">
+        <a class="btn" href="/home" data-magnetic>
+          <span>返回首页</span>
+          <span class="btn__arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="btn btn--ghost" href="/search" data-magnetic>
+          <span>站内搜索</span>
+          <span class="btn__arrow" aria-hidden="true">⌕</span>
+        </a>
+      </div>
+
+      {latest && (
+        <div class="notfound__latest">
+          <span class="mono">LAST FILE / 最近一篇</span>
+          <a class="notfound__latest-link" href={`/posts/${latest.id}/`}>
+            <span data-post-title>{latest.data.title}</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      )}
+
+      <div class="notfound__log mono" aria-hidden="true">
+        <span>ERR_ROUTE_NOT_FOUND</span>
+        <span>TRACE: {Astro.url.pathname}</span>
+        <span>HINT: / /archives /search</span>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .notfound {
+    min-height: calc(100vh - var(--header-h));
+    padding: clamp(56px, 10vw, 120px) 0;
+    overflow: hidden;
+  }
+
+  .notfound__inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .notfound__code {
+    margin-top: 24px;
+    font-family: var(--font-display);
+    font-size: clamp(96px, 22vw, 260px);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+  }
+
+  .notfound__rule {
+    width: min(320px, 42vw);
+    height: 8px;
+    margin-top: 20px;
+    background: var(--accent);
+  }
+
+  .notfound__text {
+    max-width: 52ch;
+    margin-top: 24px;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
+  .notfound__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .notfound__latest {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(520px, 100%);
+    margin-top: 48px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  .notfound__latest .mono {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .notfound__latest-link {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    font-family: var(--font-display);
+    font-size: clamp(18px, 2.4vw, 24px);
+    line-height: 1.4;
+  }
+
+  .notfound__latest-link:hover {
+    color: var(--accent-text);
+  }
+
+  .notfound__log {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 56px;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+</style>

@@ -1,0 +1,227 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { padNumber } from '../lib/format';
+import { SITE } from '../lib/site';
+
+const projects = [
+  {
+    name: 'MISIRO Blog',
+    year: '2026',
+    role: '个人项目',
+    description:
+      '你正在看的这个站点。纯静态、无后端，构建期生成页面、搜索索引与 RSS，部署在免费额度内。',
+    tags: ['Astro', '静态站点', '性能'],
+    status: 'ONLINE',
+    href: '/',
+    external: false,
+  },
+  {
+    name: 'Build Budget',
+    year: '2026',
+    role: '工具链',
+    description:
+      '一个构建产物体积检查器：读取产物、对比预算阈值、在 CI 中直接失败，避免「下次再优化」。',
+    tags: ['Node', 'CI', '性能预算'],
+    status: 'MAINTAINED',
+    href: `${SITE.github}/build-budget`,
+    external: true,
+  },
+  {
+    name: 'Pagefind 中文补丁',
+    year: '2025',
+    role: '实验',
+    description:
+      '给 Pagefind 的中文结果加一层标题与标签权重补偿，减少长词被正文淹没的情况。',
+    tags: ['Pagefind', '搜索', '中文'],
+    status: 'EXPERIMENT',
+    href: `${SITE.github}/pagefind-zh`,
+    external: true,
+  },
+  {
+    name: 'Halftone Kit',
+    year: '2025',
+    role: '视觉系统',
+    description:
+      '一组没有依赖的 CSS 工具：网点底纹、粗描边、HUD 角标与扫描线，复制进项目就能用。',
+    tags: ['CSS', '设计系统'],
+    status: 'ARCHIVED',
+    href: `${SITE.github}/halftone-kit`,
+    external: true,
+  },
+];
+---
+
+<BaseLayout
+  title="项目"
+  description="MISIRO 参与或维护的项目清单，包含工具链、实验与视觉系统。"
+>
+  <section class="page-hero">
+    <div class="container">
+      <span class="sticker">PROJECTS / 项目</span>
+      <h1 class="page-hero__title glitch">项目</h1>
+      <p class="page-hero__desc">
+        {padNumber(projects.length, 2)} 个正在维护或已经归档的东西。能开源的部分都在 GitHub 上。
+      </p>
+    </div>
+  </section>
+
+  <div class="container">
+    <ol class="project-list" data-reveal>
+      {
+        projects.map((project, index) => (
+          <li class="project">
+            <a
+              class="project__link"
+              href={project.href}
+              target={project.external ? '_blank' : undefined}
+              rel={project.external ? 'noopener noreferrer' : undefined}
+            >
+              <span class="project__num mono">{padNumber(index + 1)}</span>
+              <span class="project__body">
+                <span class="project__top">
+                  <span class="project__name">{project.name}</span>
+                  <span class="project__status mono">{project.status}</span>
+                </span>
+                <span class="project__desc">{project.description}</span>
+                <span class="project__meta mono">
+                  <span>{project.year}</span>
+                  <span>{project.role}</span>
+                  <span class="project__tags">{project.tags.join(' · ')}</span>
+                </span>
+              </span>
+              <span class="project__arrow" aria-hidden="true">
+                ↗
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="project-note mono">
+      清单为手动维护，没有自动抓取 GitHub。过期链接请通过
+      <a href={`mailto:${SITE.email}`}>邮件</a> 告知。
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .project-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .project {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .project__link {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 24px;
+    gap: 16px;
+    align-items: start;
+    padding: 22px 0;
+    transition:
+      background var(--dur-2) var(--ease-quart),
+      padding var(--dur-2) var(--ease-quart);
+  }
+
+  .project__link:hover {
+    padding-left: 12px;
+    background: var(--bg-elevated);
+  }
+
+  .project__num {
+    padding-top: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .project__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .project__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .project__name {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.2vw, 26px);
+    line-height: 1.3;
+  }
+
+  .project__status {
+    padding: 2px 6px;
+    border: 1px solid var(--line-strong);
+    color: var(--accent-text);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+
+  .project__desc {
+    max-width: 68ch;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .project__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .project__tags {
+    color: var(--accent-text);
+  }
+
+  .project__arrow {
+    padding-top: 2px;
+    color: var(--text-muted);
+    font-size: 16px;
+    transition:
+      color var(--dur-2),
+      transform var(--dur-2) var(--ease-quart);
+  }
+
+  .project__link:hover .project__arrow {
+    color: var(--accent-text);
+    transform: translate(2px, -2px);
+  }
+
+  .project-note {
+    margin-top: 28px;
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1.8;
+  }
+
+  .project-note a {
+    color: var(--text);
+    border-bottom: 1px solid var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .project__link {
+      grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .project__arrow {
+      display: none;
+    }
+  }
+</style>

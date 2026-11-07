@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import '@fontsource/archivo-black/400.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import '@fontsource/noto-sans-sc/chinese-simplified-900.css';
+@import './tokens.css';
+@import './base.css';
+@import './components.css';

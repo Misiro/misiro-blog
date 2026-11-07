@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, tagCounts } from '../../lib/content';
+import { padNumber } from '../../lib/format';
+
+const posts = await getPosts();
+const tags = tagCounts(posts);
+const maxCount = Math.max(...tags.map((tag) => tag.count), 1);
+---
+
+<BaseLayout title="标签" description="以标签为线索浏览 MISIRO 的文章。">
+  <section class="page-hero">
+    <div class="container">
+      <span class="sticker">TAGS / 标签矩阵</span>
+      <h1 class="page-hero__title glitch">标签</h1>
+      <p class="page-hero__desc">
+        {tags.length} 个标签，字号随文章数量变化。没有彩色胶囊，只有文字本身。
+      </p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="tag-matrix tag-matrix--page">
+      {
+        tags.map((tag) => {
+          const weight = tag.count / maxCount;
+          const size = weight > 0.75 ? 32 : weight > 0.4 ? 24 : 18;
+          return (
+            <a
+              href={`/tags/${encodeURIComponent(tag.name)}/`}
+              style={`--tag-size:${size}px`}
+            >
+              {tag.name}
+              <small>{padNumber(tag.count, 2)}</small>
+            </a>
+          );
+        })
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tag-matrix--page {
+    max-width: 960px;
+    gap: 14px 24px;
+    padding-top: 8px;
+  }
+</style>

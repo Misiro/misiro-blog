@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import IndexRow from '../components/IndexRow.astro';
+import { getPosts, groupByYear } from '../lib/content';
+
+const posts = await getPosts();
+const groups = groupByYear(posts);
+let counter = 0;
+---
+
+<BaseLayout title="归档" description={`MISIRO 的全部文章存档，共 ${posts.length} 篇，按时间倒序排列。`}>
+  <section class="page-hero">
+    <div class="container">
+      <span class="sticker">ARCHIVE / 全部存档</span>
+      <h1 class="page-hero__title glitch">归档</h1>
+      <p class="page-hero__desc">
+        {posts.length} 篇文章，按时间倒序排列。没有分页，没有加载更多，一次看完。
+      </p>
+
+      <nav class="year-jump mono" aria-label="年份快速跳转">
+        {
+          groups.map((group) => (
+            <a href={`#year-${group.year}`}>{group.year}</a>
+          ))
+        }
+      </nav>
+    </div>
+  </section>
+
+  <div class="container archive">
+    {
+      groups.map((group) => (
+        <section class="archive-year" id={`year-${group.year}`} data-reveal>
+          <header class="archive-year__head">
+            <h2 class="archive-year__year">{group.year}</h2>
+            <span class="mono archive-year__count">{group.posts.length} POSTS</span>
+          </header>
+          <div class="index-list">
+            {group.posts.map((post) => {
+              counter += 1;
+              return <IndexRow post={post} index={counter} />;
+            })}
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .year-jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 28px;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .year-jump a {
+    border-bottom: 1px solid transparent;
+    transition:
+      color var(--dur-1),
+      border-color var(--dur-1);
+  }
+
+  .year-jump a:hover {
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  .archive {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(48px, 7vw, 72px);
+  }
+
+  .archive-year {
+    scroll-margin-top: calc(var(--header-h) + 24px);
+  }
+
+  .archive-year__head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--text);
+  }
+
+  .archive-year__year {
+    font-size: clamp(40px, 7vw, 80px);
+    line-height: 1;
+  }
+
+  .archive-year__count {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+</style>

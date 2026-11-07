@@ -1,0 +1,161 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import SectionHead from '../components/SectionHead.astro';
+import IndexRow from '../components/IndexRow.astro';
+import NoteItem from '../components/NoteItem.astro';
+import {
+  getPosts,
+  getNotes,
+  getMoments,
+  featuredPost,
+  wordCount,
+  tagCounts,
+} from '../lib/content';
+import { padNumber } from '../lib/format';
+
+const posts = await getPosts();
+const notes = await getNotes();
+const moments = await getMoments();
+const featured = featuredPost(posts) ?? posts[0];
+const tags = tagCounts(posts).slice(0, 12);
+const stats = { posts: posts.length, words: wordCount(posts) };
+---
+
+<BaseLayout>
+  <Hero latest={posts[0]} featured={featured} stats={stats} moments={moments} />
+
+  <section class="home-block" data-reveal>
+    <div class="container">
+      <SectionHead num="02" title="全部文章" href="/archives" linkLabel="查看归档" />
+      <div class="index-list">
+        {
+          posts.slice(0, 8).map((post, index) => (
+            <IndexRow post={post} index={index + 1} intro={index < 6} />
+          ))
+        }
+      </div>
+      <div class="home-more-row">
+        <a class="home-more" href="/archives">
+          继续阅读全部 {padNumber(posts.length)} 篇 <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-block" data-reveal>
+    <div class="container home-split">
+      <div class="home-notes">
+        <SectionHead num="03" title="手记" href="/notes" linkLabel="全部手记" />
+        <div class="note-list">
+          {notes.slice(0, 3).map((note) => <NoteItem note={note} />)}
+        </div>
+      </div>
+
+      <div class="home-tags">
+        <SectionHead num="04" title="标签" href="/tags" linkLabel="标签矩阵" />
+        <div class="tag-matrix">
+          {
+            tags.map((tag) => (
+              <a
+                href={`/tags/${encodeURIComponent(tag.name)}/`}
+                style={`--tag-size:${Math.min(30, 17 + tag.count * 4)}px`}
+              >
+                {tag.name}
+                <small>{padNumber(tag.count, 2)}</small>
+              </a>
+            ))
+          }
+        </div>
+
+        <aside class="rss-card panel">
+          <span class="hud-corner hud-corner--tl" aria-hidden="true"></span>
+          <span class="hud-corner hud-corner--br" aria-hidden="true"></span>
+          <div class="rss-card__label mono">SUBSCRIBE / RSS 2.0</div>
+          <p class="rss-card__text">不加追踪脚本，不弹订阅窗。把新文章送进你的阅读器。</p>
+          <a class="rss-card__link" href="/rss.xml">获取订阅地址 ↗</a>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .home-block {
+    padding-top: clamp(48px, 7vw, 88px);
+  }
+
+  .home-more-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+  }
+
+  .home-more {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    border-bottom: 1px solid transparent;
+    transition:
+      color var(--dur-2),
+      border-color var(--dur-2);
+  }
+
+  .home-more:hover {
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  .home-split {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(28px, 5vw, 64px);
+    align-items: start;
+  }
+
+  .home-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .rss-card {
+    position: relative;
+    margin-top: 16px;
+    padding: 20px;
+  }
+
+  .rss-card__label {
+    color: var(--accent-text);
+    font-size: 10px;
+  }
+
+  .rss-card__text {
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+
+  .rss-card__link {
+    display: inline-block;
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    border-bottom: 1px solid var(--accent);
+  }
+
+  .rss-card__link:hover {
+    color: var(--accent-text);
+  }
+
+  @media (max-width: 1024px) {
+    .home-split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+</style>

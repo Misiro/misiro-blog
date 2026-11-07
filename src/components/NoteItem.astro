@@ -1,0 +1,39 @@
+---
+import { formatDate } from '../lib/format';
+import type { Note } from '../lib/content';
+
+interface Props {
+  note: Note;
+}
+
+const { note } = Astro.props;
+---
+
+<article class="note-item">
+  <div class="note-item__head">
+    <time class="note-item__date" datetime={note.data.date.toISOString()}>
+      {formatDate(note.data.date)}
+    </time>
+    <span class="mono note-item__type">{note.data.type === 'image' ? 'PHOTO' : 'NOTE'}</span>
+  </div>
+  <p class="note-item__body">{note.data.content}</p>
+  {
+    note.data.image && (
+      <img src={note.data.image} alt={note.data.content.slice(0, 60)} loading="lazy" />
+    )
+  }
+  <button class="note-item__more" type="button" data-note-toggle aria-expanded="false" hidden>
+    展开 +
+  </button>
+</article>
+
+<style>
+  .note-item__type {
+    color: var(--accent-text);
+    font-size: 10px;
+  }
+
+  .note-item__more[hidden] {
+    display: none;
+  }
+</style>

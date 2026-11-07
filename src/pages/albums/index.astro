@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAlbums } from '../../lib/content';
+import { formatDate, padNumber } from '../../lib/format';
+
+const albums = await getAlbums();
+---
+
+<BaseLayout title="相册" description="城市、结构与光线的影像记录。">
+  <section class="page-hero">
+    <div class="container">
+      <span class="sticker">ALBUMS / 相册</span>
+      <h1 class="page-hero__title glitch">相册</h1>
+      <p class="page-hero__desc">
+        {padNumber(albums.length, 2)} 个相册。缩略图固定比例裁切，点开后用键盘左右翻页。
+      </p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="album-grid">
+      {
+        albums.map((album) => (
+          <a class="album-card" href={`/albums/${album.id}/`}>
+            <img
+              src={album.data.cover}
+              alt={album.data.title}
+              width="1280"
+              height="960"
+              loading="lazy"
+            />
+            <div class="album-card__meta">
+              <span class="album-card__title">{album.data.title}</span>
+              <span class="mono album-card__date">{formatDate(album.data.date)}</span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .album-card__date {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+</style>

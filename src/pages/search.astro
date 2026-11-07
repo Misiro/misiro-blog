@@ -1,0 +1,136 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPosts, tagCounts } from '../lib/content';
+import { padNumber } from '../lib/format';
+
+const posts = await getPosts();
+const hotTags = tagCounts(posts).slice(0, 8);
+---
+
+<BaseLayout title="搜索" description="在 MISIRO 的全部文章与手记中搜索关键词。">
+  <section class="search-page">
+    <div class="container">
+      <span class="kicker">SEARCH / 站内搜索</span>
+
+      <div class="search-field">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5"></circle>
+          <path d="M15.5 15.5 21 21"></path>
+        </svg>
+        <input
+          type="search"
+          data-search-input
+          placeholder="输入关键词，回车搜索"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="搜索关键词"
+        />
+        <span class="mono search-status" data-search-status aria-live="polite">IDLE</span>
+      </div>
+
+      <div class="search-hints" data-search-hints>
+        <span class="mono">HOT / 热门标签</span>
+        <div class="search-hints__tags">
+          {
+            hotTags.map((tag) => (
+              <button class="search-chip mono" type="button" data-search-chip={tag.name}>
+                #{tag.name} <span>{padNumber(tag.count, 2)}</span>
+              </button>
+            ))
+          }
+        </div>
+        <p class="search-note mono">
+          索引在构建期生成，首屏不加载。按 / 可直接聚焦输入框。
+        </p>
+      </div>
+
+      <div class="search-results" data-search-results aria-live="polite"></div>
+    </div>
+  </section>
+
+  <script>
+    import '../scripts/search';
+  </script>
+</BaseLayout>
+
+<style>
+  .search-page {
+    min-height: 60vh;
+    padding-top: clamp(48px, 8vw, 96px);
+  }
+
+  .search-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 1.6;
+  }
+
+  .search-status {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .search-hints {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 28px;
+  }
+
+  .search-hints[hidden] {
+    display: none;
+  }
+
+  .search-hints > .mono {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .search-hints__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search-chip {
+    padding: 5px 10px;
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    transition:
+      color var(--dur-1),
+      border-color var(--dur-1);
+  }
+
+  .search-chip span {
+    color: var(--accent-text);
+  }
+
+  .search-chip:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .search-note {
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1.8;
+  }
+
+  .search-results {
+    margin-top: 28px;
+  }
+
+  @media (max-width: 640px) {
+    .search-status {
+      display: none;
+    }
+  }
+</style>

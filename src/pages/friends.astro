@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getFriends } from '../lib/content';
+import { padNumber } from '../lib/format';
+import { SITE } from '../lib/site';
+
+const friends = await getFriends();
+
+const issueBody = [
+  '## 友链申请',
+  '',
+  '- 站点名称：',
+  '- 站点地址：',
+  '- 头像地址：',
+  '- 一句话简介：',
+  '- RSS / 订阅地址（可选）：',
+  '',
+  '> 提交前请确认站点可正常访问，且内容以原创技术或设计为主。',
+].join('\n');
+
+const issueUrl = `${SITE.github}/issues/new?title=${encodeURIComponent(
+  '友链申请'
+)}&body=${encodeURIComponent(issueBody)}`;
+
+function domainOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+---
+
+<BaseLayout
+  title="友链"
+  description="MISIRO 的友链列表，以及通过 GitHub Issue 提交友链申请的方式。"
+>
+  <section class="page-hero">
+    <div class="container">
+      <span class="sticker">LINKS / 友链</span>
+      <h1 class="page-hero__title glitch">友链</h1>
+      <p class="page-hero__desc">
+        {padNumber(friends.length, 2)} 个长期阅读的站点。没有自动抓取，没有互相吹捧，只放真的会点开的东西。
+      </p>
+    </div>
+  </section>
+
+  <div class="container">
+    <ul class="friends-grid" data-reveal>
+      {
+        friends.map((friend) => (
+          <li class="friend">
+            <a class="friend__link" href={friend.data.url} target="_blank" rel="noopener noreferrer">
+              {
+                friend.data.avatar ? (
+                  <img src={friend.data.avatar} alt="" loading="lazy" width="44" height="44" />
+                ) : (
+                  <span class="friend__avatar" aria-hidden="true">
+                    {friend.data.name.slice(0, 1).toUpperCase()}
+                  </span>
+                )
+              }
+              <span class="friend__body">
+                <span class="friend__name">{friend.data.name}</span>
+                <span class="friend__desc">{friend.data.description}</span>
+                <span class="friend__domain mono">{domainOf(friend.data.url)} ↗</span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <aside class="friend-apply panel" data-reveal>
+      <span class="hud-corner hud-corner--tl" aria-hidden="true"></span>
+      <span class="hud-corner hud-corner--br" aria-hidden="true"></span>
+      <div class="friend-apply__label mono">APPLY / 友链申请</div>
+      <p class="friend-apply__text">
+        没有后台审核系统。把站点信息填进 GitHub Issue，通过后手动加进仓库。
+      </p>
+      <ol class="friend-apply__steps">
+        <li><span class="mono">01</span>站点可正常访问，内容以原创为主</li>
+        <li><span class="mono">02</span>已在自己的站点放置 MISIRO 的链接</li>
+        <li><span class="mono">03</span>提交 Issue，附上名称、地址、头像与简介</li>
+      </ol>
+      <a class="btn friend-apply__btn" href={issueUrl} target="_blank" rel="noopener noreferrer">
+        <span>发起申请</span>
+        <span class="btn__arrow" aria-hidden="true">↗</span>
+      </a>
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .friends-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .friend__link {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    height: 100%;
+  }
+
+  .friend__avatar {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-strong);
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: var(--font-display);
+    font-size: 20px;
+  }
+
+  .friend__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .friend__domain {
+    margin-top: 2px;
+  }
+
+  .friend-apply {
+    display: grid;
+    gap: 18px;
+    margin-top: clamp(32px, 5vw, 56px);
+    padding: clamp(20px, 3vw, 32px);
+  }
+
+  .friend-apply__label {
+    color: var(--accent-text);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .friend-apply__text {
+    max-width: 62ch;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .friend-apply__steps {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .friend-apply__steps .mono {
+    margin-right: 10px;
+    color: var(--accent-text);
+    font-size: 10px;
+  }
+
+  .friend-apply__btn {
+    justify-self: start;
+  }
+</style>

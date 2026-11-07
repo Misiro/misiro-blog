@@ -1,0 +1,599 @@
+---
+import FeaturedDossier from './FeaturedDossier.astro';
+import type { Moment, Post } from '../lib/content';
+import { SITE } from '../lib/site';
+import {
+  formatClock,
+  formatCompact,
+  formatDate,
+  formatDay,
+  formatMonth,
+  padNumber,
+} from '../lib/format';
+
+interface Props {
+  latest?: Post;
+  featured?: Post;
+  stats: { posts: number; words: number };
+  moments?: Moment[];
+}
+
+const { latest, featured, stats, moments = [] } = Astro.props;
+
+const chronological = [...moments].reverse();
+const DAY = 86_400_000;
+const firstMoment = chronological[0];
+const lastMoment = chronological[chronological.length - 1];
+const spanDays =
+  firstMoment && lastMoment
+    ? Math.max(
+        0,
+        Math.round(
+          (lastMoment.data.date.valueOf() - firstMoment.data.date.valueOf()) / DAY
+        )
+      )
+    : 0;
+const cumulativeDays = chronological.map((moment) =>
+  firstMoment
+    ? Math.max(
+        0,
+        Math.round((moment.data.date.valueOf() - firstMoment.data.date.valueOf()) / DAY)
+      )
+    : 0
+);
+const barHeight = (days: number) =>
+  Math.round(22 + (days / Math.max(1, spanDays)) * 78);
+const latestIndex = chronological.length - 1;
+---
+
+<section class="hero halftone" data-spotlight aria-labelledby="hero-title">
+  <div class="spotlight" aria-hidden="true"></div>
+
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <div class="hero-sticker-row intro-sticker" data-intro-sticker>
+        <span class="sticker sticker--accent">技术日志 / DEV LOG</span>
+        <span class="mono hero-signal">SIGNAL OK</span>
+      </div>
+
+      <h1 class="hero-title" id="hero-title" data-title-field>
+        <span class="intro-line" data-intro-line>把构建</span>
+        <span class="intro-line" data-intro-line>当作作品。</span>
+      </h1>
+
+      <div class="hero-rule" aria-hidden="true"></div>
+
+      <p class="hero-sub">
+        记录构建管线、性能预算与界面实验。没有后端，没有订阅弹窗，只有可以被搜索的文本。
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn" href={latest ? `/posts/${latest.id}/` : '/archives'} data-magnetic>
+          <span>读取最新文章</span>
+          <span class="btn__arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="btn btn--ghost" href="/rss.xml" data-magnetic>
+          <span>订阅 RSS</span>
+          <span class="btn__arrow" aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+      <dl class="hero-stats">
+        <div>
+          <dt>文章</dt>
+          <dd>{padNumber(stats.posts)}</dd>
+        </div>
+        <div>
+          <dt>字数</dt>
+          <dd>{formatCompact(stats.words)}</dd>
+        </div>
+        <div>
+          <dt>起点</dt>
+          <dd>{SITE.startYear}</dd>
+        </div>
+      </dl>
+    </div>
+
+    {
+      featured && (
+        <div class="hero-side">
+          <FeaturedDossier post={featured} />
+        </div>
+      )
+    }
+  </div>
+
+  {
+    moments.length > 0 && (
+      <div class="container live-wrap">
+        <aside class="live-strip" data-live-feed aria-labelledby="live-strip-title">
+          <div class="live-strip__head">
+            <span class="live-strip__tag mono"><i aria-hidden="true" /> LIVE BUFFER</span>
+            <h2 class="live-strip__title" id="live-strip-title">
+              即刻 / 时间采样
+            </h2>
+            <span class="mono live-strip__stat">
+              {padNumber(moments.length, 2)} SAMPLES · {padNumber(spanDays, 2)} DAYS
+            </span>
+            <a class="live-strip__enter mono" href="/moments">
+              进入时间流 <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <div class="live-strip__body">
+            <div class="live-strip__stage">
+              <span class="live-strip__scan" aria-hidden="true" />
+              {
+                chronological.map((moment, index) => (
+                  <a
+                    class:list={['live-strip__slide', { 'is-active': index === latestIndex }]}
+                    href={`/moments#m-${padNumber(index + 1, 2)}`}
+                    data-live-slide
+                    aria-hidden={index === latestIndex ? 'false' : 'true'}
+                    tabindex={index === latestIndex ? 0 : -1}
+                  >
+                    <span class="live-strip__stamp">
+                      <span class="live-strip__day">{formatDay(moment.data.date)}</span>
+                      <span class="mono live-strip__date">
+                        {formatMonth(moment.data.date)} · {formatClock(moment.data.date)}
+                      </span>
+                    </span>
+
+                    <span class="live-strip__text">{moment.data.content}</span>
+                  </a>
+                ))
+              }
+            </div>
+
+            <div class="live-strip__rail">
+              <div class="live-strip__bars" role="group" aria-label="即刻时间轴">
+                {
+                  chronological.map((moment, index) => (
+                    <button
+                      class="live-strip__tick"
+                      type="button"
+                      data-live-tick
+                      aria-label={`查看 ${formatDate(moment.data.date)} 的即刻`}
+                    >
+                      <span
+                        class="live-strip__bar"
+                        style={`--h:${barHeight(cumulativeDays[index])}%`}
+                      />
+                    </button>
+                  ))
+                }
+              </div>
+              <div class="live-strip__progress" aria-hidden="true"><span /></div>
+              <div class="mono live-strip__range">
+                <span>{formatDate(chronological[0].data.date)}</span>
+                <span>NOW / {formatDate(moments[0].data.date)}</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    )
+  }
+
+  <div class="container hero-foot">
+    <span class="mono">▼ SCROLL / 向下阅读</span>
+    <span class="mono hero-coord">31.23°N / 121.47°E</span>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-top: clamp(40px, 7vw, 88px);
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(28px, 5vw, 64px);
+    align-items: start;
+  }
+
+  .hero-sticker-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .hero-signal {
+    color: var(--accent-text);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+
+  .hero-title {
+    margin-top: 26px;
+    font-size: var(--fs-display);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+  }
+
+  .hero-title > span {
+    display: block;
+  }
+
+  :global(.title-char) {
+    display: inline-block;
+    color: color-mix(in srgb, var(--text), var(--accent-text) var(--p, 0%));
+    transform: translate3d(0, calc(var(--prox, 0) * -6px), 0);
+    transition:
+      transform var(--dur-2) var(--ease-quart),
+      color var(--dur-2) var(--ease-quart);
+  }
+
+  .hero-rule {
+    width: 128px;
+    height: 6px;
+    margin-top: 22px;
+    background: var(--accent);
+  }
+
+  .hero-sub {
+    margin-top: 22px;
+    max-width: 46ch;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-muted);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: clamp(24px, 4vw, 48px);
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  .hero-stats dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .hero-stats dd {
+    margin: 4px 0 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .hero-side {
+    position: relative;
+    padding-top: 34px;
+  }
+
+  .hero-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 20px;
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  /* ---------- 即刻采样条 ---------- */
+  .live-wrap {
+    margin-top: clamp(20px, 2.8vw, 32px);
+  }
+
+  .live-strip {
+    padding-top: 11px;
+    border-top: 1px solid var(--line);
+  }
+
+  .live-strip__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px clamp(12px, 2vw, 22px);
+  }
+
+  .live-strip__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--accent-text);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+  }
+
+  .live-strip__tag i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: live-dot 2.4s var(--ease-inout) infinite;
+  }
+
+  @keyframes live-dot {
+    0% {
+      box-shadow: 0 0 0 0 rgba(216, 255, 62, 0.45);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 6px rgba(216, 255, 62, 0);
+    }
+  }
+
+  .live-strip__title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  .live-strip__stat {
+    color: var(--text-muted);
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .live-strip__enter {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    padding-bottom: 1px;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    color: var(--accent-text);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    transition: border-color var(--dur-2) var(--ease-quart);
+  }
+
+  .live-strip__enter span {
+    transition: transform var(--dur-2) var(--ease-quart);
+  }
+
+  .live-strip__enter:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  .live-strip__enter:hover span {
+    transform: translateX(3px);
+  }
+
+  .live-strip__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(150px, 16vw, 220px);
+    align-items: end;
+    gap: clamp(18px, 3vw, 40px);
+    margin-top: 10px;
+  }
+
+  .live-strip__stage {
+    position: relative;
+    height: 52px;
+  }
+
+  .live-strip__scan {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    left: var(--scan, 50%);
+    z-index: 2;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--accent) 45%, transparent),
+      transparent
+    );
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .live-strip__slide {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: clamp(56px, 5.2vw, 74px) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(14px, 2vw, 26px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition:
+      opacity 0.45s var(--ease-quart),
+      transform 0.45s var(--ease-expo),
+      visibility 0.45s;
+  }
+
+  .live-strip__slide.is-active {
+    z-index: 3;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .live-strip__stamp {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .live-strip__day {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.2vw, 28px);
+    line-height: 0.85;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--line-strong);
+  }
+
+  .live-strip__date {
+    color: var(--text-muted);
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .live-strip__text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: clamp(12.5px, 1.1vw, 14px);
+    line-height: 1.7;
+    text-wrap: pretty;
+  }
+
+  .live-strip__rail {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .live-strip__bars {
+    display: flex;
+    align-items: flex-end;
+    height: 40px;
+  }
+
+  .live-strip__tick {
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: center;
+    height: 100%;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .live-strip__bar {
+    width: 2px;
+    height: var(--h, 20%);
+    background: var(--line-strong);
+    transition:
+      background var(--dur-2) var(--ease-quart),
+      box-shadow var(--dur-2) var(--ease-quart),
+      width var(--dur-2) var(--ease-quart);
+  }
+
+  .live-strip__tick:hover .live-strip__bar {
+    background: var(--accent-text);
+  }
+
+  .live-strip__tick.is-active .live-strip__bar {
+    width: 3px;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(216, 255, 62, 0.45);
+  }
+
+  .live-strip__progress {
+    height: 1px;
+    background: var(--line-strong);
+  }
+
+  .live-strip__progress span {
+    display: block;
+    width: var(--scan, 50%);
+    height: 1px;
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(216, 255, 62, 0.45);
+  }
+
+  .live-strip__range {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .live-strip[data-paused='true'] .live-strip__tag i {
+    animation-play-state: paused;
+  }
+
+  @media (max-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero-side {
+      padding-top: 8px;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .live-strip__stat {
+      display: none;
+    }
+
+    .live-strip__body {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .live-strip__stage {
+      height: 66px;
+    }
+
+    .live-strip__slide {
+      grid-template-columns: 52px minmax(0, 1fr);
+    }
+
+    .live-strip__scan {
+      display: none;
+    }
+
+    .live-strip__day {
+      font-size: 24px;
+    }
+
+    .live-strip__bars {
+      height: 36px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-strip__tag i {
+      animation: none;
+    }
+
+    .live-strip__scan {
+      display: none;
+    }
+
+    .live-strip__slide,
+    .live-strip__bar {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero-title {
+      margin-top: 20px;
+    }
+
+    .hero-stats {
+      gap: 24px;
+      margin-top: 30px;
+    }
+
+    .hero-coord {
+      display: none;
+    }
+  }
+</style>

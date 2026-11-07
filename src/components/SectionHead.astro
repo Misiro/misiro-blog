@@ -1,0 +1,18 @@
+---
+interface Props {
+  num: string;
+  title: string;
+  href?: string;
+  linkLabel?: string;
+}
+
+const { num, title, href, linkLabel = '查看全部' } = Astro.props;
+---
+
+<div class="section-head">
+  <h2 class="section-head__title">
+    <span class="section-head__num">{num}</span>
+    <span>{title}</span>
+  </h2>
+  {href && <a class="section-head__more" href={href}>{linkLabel} ↗</a>}
+</div>

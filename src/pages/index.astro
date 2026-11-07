@@ -1,0 +1,2675 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { getPosts, wordCount } from '../lib/content';
+import { padNumber, formatCompact } from '../lib/format';
+import { SITE } from '../lib/site';
+import '../styles/global.css';
+
+const posts = await getPosts();
+const words = wordCount(posts);
+
+const bootLines = [
+  'SYS.BOOT / MISIRO OS v1.1',
+  `CONTENT ...... ${padNumber(posts.length)} POSTS / ${formatCompact(words)} WORDS`,
+  'RENDER ....... STATIC / ZERO RUNTIME',
+  'SEARCH ....... PAGEFIND READY',
+  'TRACKING ..... NONE',
+];
+
+const titleChars = ['M', 'I', 'S', 'I', 'R', 'O'];
+const levelBars = Array.from({ length: 12 }, (_, index) => index);
+const scanBars = Array.from({ length: 24 }, (_, index) => index);
+const lockDots = Array.from({ length: 9 }, (_, index) => index);
+---
+
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{SITE.title}</title>
+    <meta name="description" content={SITE.description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0E0F12" />
+
+    <style is:inline>
+      html {
+        background: #0e0f12;
+      }
+      html[data-theme='light'] {
+        background: #f2f1ec;
+      }
+    </style>
+
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        try {
+          var saved = localStorage.getItem('misiro-theme');
+          root.dataset.theme = saved === 'light' ? 'light' : 'dark';
+        } catch (e) {
+          root.dataset.theme = 'dark';
+        }
+        root.classList.add('js');
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) return;
+        var seen = false;
+        try {
+          seen = Boolean(sessionStorage.getItem('misiro-splash'));
+          sessionStorage.setItem('misiro-splash', '1');
+        } catch (e) {}
+        root.dataset.splash = seen ? 'quick' : 'first';
+        // 兜底：脚本未启动时 3.4s 后强制显示内容
+        setTimeout(function () {
+          if (!window.__splashBoot) root.removeAttribute('data-splash');
+        }, 3400);
+      })();
+    </script>
+
+    <ClientRouter />
+  </head>
+
+  <body class="splash-body">
+    <main class="splash" data-splash>
+      <!-- 全屏信号场：粒子 / 透视网格 / 数码雨 / 冲击波 -->
+      <canvas class="splash-canvas" aria-hidden="true"></canvas>
+
+      <!-- CRT 暗角 -->
+      <div class="splash-vignette" aria-hidden="true"></div>
+
+      <!-- 点击爆闪 -->
+      <div class="splash-flash" aria-hidden="true"></div>
+
+      <!-- 网点底纹，圆形擦除入场 -->
+      <div class="splash-field" aria-hidden="true" data-boot></div>
+
+      <!-- CRT 扫描线 -->
+      <div class="splash-scanlines" aria-hidden="true"></div>
+
+      <!-- 巨型描边幽灵字 -->
+      <div class="splash-ghost" aria-hidden="true" data-boot>MISIRO</div>
+
+      <!-- 网格框线与 HUD 角标 -->
+      <div class="splash-frame" aria-hidden="true">
+        <span class="splash-frame__line splash-frame__line--t" data-boot></span>
+        <span class="splash-frame__line splash-frame__line--b" data-boot></span>
+        <span class="splash-frame__line splash-frame__line--l" data-boot></span>
+        <span class="splash-frame__line splash-frame__line--r" data-boot></span>
+        <span class="hud-corner hud-corner--tl"></span>
+        <span class="hud-corner hud-corner--tr"></span>
+        <span class="hud-corner hud-corner--bl"></span>
+        <span class="hud-corner hud-corner--br"></span>
+      </div>
+
+      <!-- 左右刻度尺 -->
+      <div class="splash-ruler splash-ruler--l" aria-hidden="true" data-boot style="--base:900ms"></div>
+      <div class="splash-ruler splash-ruler--r" aria-hidden="true" data-boot style="--base:960ms"></div>
+
+      <!-- 启动进度：沿底部框线充能 -->
+      <div class="splash-progress" aria-hidden="true">
+        <span class="splash-progress__bar"></span>
+      </div>
+
+      <!-- 三道扫描带 -->
+      <div class="splash-bars" aria-hidden="true">
+        <span class="splash-bar splash-bar--1" data-boot></span>
+        <span class="splash-bar splash-bar--2" data-boot></span>
+        <span class="splash-bar splash-bar--3" data-boot></span>
+      </div>
+
+      <header class="splash-top mono">
+        <span data-boot style="--base:80ms">SIGNAL OK / NO COOKIES</span>
+        <span data-boot style="--base:160ms">31.23°N / 121.47°E</span>
+        <span class="splash-readout" data-boot style="--base:240ms">
+          <span data-clock>00:00:00</span>
+          <span class="splash-readout__sep">/</span>
+          <span data-fps>60</span> FPS
+        </span>
+      </header>
+
+      <section class="splash-core">
+        <div class="splash-sticker-row" data-boot style="--base:300ms">
+          <span class="sticker sticker--accent">DEV LOG / EST. {SITE.startYear}</span>
+          <span class="mono splash-ver">STATIC / ASTRO / CLOUDFLARE</span>
+        </div>
+
+        <div class="splash-title-wrap">
+          <div class="splash-cut" aria-hidden="true" data-boot style="--base:260ms"></div>
+
+          <div class="splash-title-shell">
+            <h1 class="splash-title" aria-label={SITE.name}>
+              {
+                titleChars.map((char, index) => (
+                  <span
+                    class="splash-char"
+                    style={`--base:${420 + index * 58}ms;--idle-delay:${(index * 0.14).toFixed(2)}s;--blast-delay:${index * 24}ms`}
+                    data-boot
+                    aria-hidden="true"
+                  >
+                    {char}
+                  </span>
+                ))
+              }
+            </h1>
+            <span
+              class="splash-echo splash-echo--cyan"
+              aria-hidden="true"
+              data-boot
+              style="--base:840ms">{SITE.name}</span
+            >
+            <span
+              class="splash-echo splash-echo--magenta"
+              aria-hidden="true"
+              data-boot
+              style="--base:900ms">{SITE.name}</span
+            >
+            <span
+              class="splash-echo splash-echo--stroke"
+              aria-hidden="true"
+              data-boot
+              style="--base:960ms">{SITE.name}</span
+            >
+          </div>
+
+          <div class="splash-rule-wrap" aria-hidden="true">
+            <div class="splash-rule" data-boot style="--base:1040ms"></div>
+            <div class="splash-rule-tick" data-boot style="--base:1460ms"></div>
+          </div>
+        </div>
+
+        <p class="splash-tag" data-boot style="--base:1120ms">
+          把构建当作作品。 <span class="splash-tag-en mono">BUILD AS CRAFT.</span>
+        </p>
+
+        <ul class="splash-boot mono" aria-label="启动日志">
+          {
+            bootLines.map((line, index) => (
+              <li
+                class="splash-boot-line"
+                data-boot
+                style={`--base:${1380 + index * 72}ms;--ok-delay:${(index * 0.18).toFixed(2)}s`}
+              >
+                <span class="splash-boot-ok" aria-hidden="true">▮</span>
+                <span class="splash-boot-text" data-scramble>{line}</span>
+              </li>
+            ))
+          }
+          <li class="splash-boot-caret" aria-hidden="true" data-boot style="--base:1800ms">
+            <span></span>
+          </li>
+        </ul>
+
+        <div class="splash-actions">
+          <a class="splash-enter" href="/home" data-enter>
+            <span class="splash-enter__bg" aria-hidden="true"></span>
+            <span class="splash-enter__corner splash-enter__corner--tl" aria-hidden="true"></span>
+            <span class="splash-enter__corner splash-enter__corner--tr" aria-hidden="true"></span>
+            <span class="splash-enter__corner splash-enter__corner--bl" aria-hidden="true"></span>
+            <span class="splash-enter__corner splash-enter__corner--br" aria-hidden="true"></span>
+            <span class="splash-enter__label">进入 ENTER</span>
+            <span class="splash-enter__arrow" aria-hidden="true">→</span>
+          </a>
+          <span class="mono splash-hint" data-boot style="--base:2100ms">CLICK / PRESS ⏎</span>
+        </div>
+      </section>
+
+      <footer class="splash-foot mono">
+        <span data-boot style="--base:180ms">
+          {padNumber(posts.length)} POSTS / {formatCompact(words)} WORDS
+        </span>
+        <span data-boot style="--base:240ms">v1.1 / 不追踪 / 无弹窗</span>
+      </footer>
+
+      <div class="splash-cross" aria-hidden="true" data-boot style="--base:1500ms">
+        <span class="splash-cross__sweep" aria-hidden="true"></span>
+        <span class="splash-cross__blip" aria-hidden="true"></span>
+        <svg viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="46" fill="none" stroke="var(--line-strong)" stroke-width="1"></circle>
+          <circle cx="60" cy="60" r="58" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 12"></circle>
+          <circle cx="60" cy="60" r="30" fill="none" stroke="var(--accent)" stroke-width="1"></circle>
+          <path d="M60 0v18M60 102v18M0 60h18M102 60h18" stroke="var(--text-muted)" stroke-width="1"></path>
+        </svg>
+        <span class="splash-cross__az mono" data-az>AZ 000°</span>
+      </div>
+
+      <div class="splash-side mono" aria-hidden="true" data-boot style="--base:1700ms">
+        BUILD AS CRAFT — {SITE.startYear}
+      </div>
+
+      <!-- 左下：信号电平，随指针速度与点击能量起伏 -->
+      <div class="splash-level" aria-hidden="true" data-boot style="--base:1720ms">
+        <span class="splash-level__bars">
+          {
+            levelBars.map((bar) => (
+              <span
+                class="splash-level__bar"
+                style={`--d:${(0.62 + bar * 0.045).toFixed(2)}s;--delay:${(bar * -0.16).toFixed(2)}s;--from:${(0.22 + bar * 0.012).toFixed(3)};--to:${(0.68 + bar * 0.018).toFixed(3)}`}
+              />
+            ))
+          }
+        </span>
+        <span class="splash-level__tag mono">SIG LVL 01</span>
+      </div>
+
+      <!-- 左下角：频段扫描 -->
+      <div class="splash-scan" aria-hidden="true" data-boot style="--base:1880ms">
+        <span class="splash-scan__bars">
+          {
+            scanBars.map((bar) => (
+              <span
+                class="splash-scan__bar"
+                style={`--d:${(1.1 + bar * 0.035).toFixed(2)}s;--delay:${(bar * -0.08).toFixed(2)}s;--to:${(0.42 + bar * 0.024).toFixed(3)}`}
+              />
+            ))
+          }
+        </span>
+        <span class="splash-scan__sweep" aria-hidden="true"></span>
+        <span class="splash-scan__tag mono">0.4–9.8 kHz</span>
+      </div>
+
+      <!-- 右上：目标锁定框，点击时收缩上锁 -->
+      <div class="splash-lock" aria-hidden="true" data-boot style="--base:1700ms">
+        <span class="splash-lock__dash" aria-hidden="true"></span>
+        <span class="splash-lock__corner splash-lock__corner--tl" aria-hidden="true"></span>
+        <span class="splash-lock__corner splash-lock__corner--tr" aria-hidden="true"></span>
+        <span class="splash-lock__corner splash-lock__corner--bl" aria-hidden="true"></span>
+        <span class="splash-lock__corner splash-lock__corner--br" aria-hidden="true"></span>
+        <span class="splash-lock__matrix" aria-hidden="true">
+          {
+            lockDots.map((dot) => <span style={`--delay:${(dot * -0.14).toFixed(2)}s`} />)
+          }
+        </span>
+        <span class="splash-lock__tag mono">LOCK 02</span>
+      </div>
+
+      <!-- 胶片颗粒 -->
+      <div class="splash-grain" aria-hidden="true"></div>
+
+      <!-- 指针准星（仅精细指针） -->
+      <div class="splash-reticle" aria-hidden="true">
+        <span class="splash-reticle__h"></span>
+        <span class="splash-reticle__v"></span>
+        <span class="splash-reticle__c"></span>
+      </div>
+
+      <!-- 点击进入时的全屏擦除 -->
+      <div class="splash-cover" aria-hidden="true"></div>
+    </main>
+
+    <script>
+      import { createSignalField } from '../scripts/splash-field';
+
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fine = window.matchMedia('(pointer: fine)').matches;
+      const splash = document.querySelector<HTMLElement>('.splash');
+      const root = document.documentElement;
+      const mode = root.dataset.splash;
+      const animated = !reduce && (mode === 'first' || mode === 'quick');
+
+      (window as unknown as Record<string, unknown>).__splashBoot = true;
+
+      const k = mode === 'quick' ? 0.34 : 1;
+
+      if (splash && animated) {
+        splash.classList.add('is-booting');
+
+        // 启动日志：字符逐格解码
+        const lines = splash.querySelectorAll<HTMLElement>('[data-scramble]');
+        const glyphs = '0123456789ABCDEF#%&/<>_▮';
+        const scramble = (el: HTMLElement, duration: number) => {
+          const finalText = el.dataset.text ?? el.textContent ?? '';
+          el.dataset.text = finalText;
+          const start = performance.now();
+          const tick = (now: number) => {
+            const progress = Math.min(1, (now - start) / duration);
+            const revealed = Math.floor(progress * finalText.length);
+            let out = '';
+            for (let i = 0; i < finalText.length; i += 1) {
+              const char = finalText[i];
+              if (i < revealed || char === ' ') {
+                out += char;
+              } else {
+                out += glyphs[Math.floor(Math.random() * glyphs.length)];
+              }
+            }
+            el.textContent = out;
+            if (progress < 1) {
+              requestAnimationFrame(tick);
+            } else {
+              el.textContent = finalText;
+            }
+          };
+          requestAnimationFrame(tick);
+        };
+
+        window.setTimeout(() => {
+          lines.forEach((line, index) => {
+            window.setTimeout(() => scramble(line, 520), index * 40);
+          });
+        }, 1380 * k);
+
+        window.setTimeout(() => {
+          splash.classList.add('is-done');
+          root.removeAttribute('data-splash');
+        }, 2800 * k);
+      }
+
+      // ---------- 全屏信号场 ----------
+      const canvas = document.querySelector<HTMLCanvasElement>('.splash-canvas');
+      let field: ReturnType<typeof createSignalField> | null = null;
+
+      if (canvas && splash && !reduce) {
+        field = createSignalField(canvas, {
+          onTear: () => {
+            // 与 Canvas 撕裂同步的 DOM 抖帧
+            splash.classList.remove('is-tearing');
+            void splash.offsetWidth;
+            splash.classList.add('is-tearing');
+            window.setTimeout(() => splash.classList.remove('is-tearing'), 160);
+          },
+        });
+
+        // 入场：一道贯穿全屏的冲击波
+        window.setTimeout(() => {
+          field?.burst(window.innerWidth / 2, window.innerHeight * 0.46);
+        }, 160 * k);
+      }
+
+      // ---------- 标题四层视差 ----------
+      const echoes = {
+        cyan: document.querySelector<HTMLElement>('.splash-echo--cyan'),
+        magenta: document.querySelector<HTMLElement>('.splash-echo--magenta'),
+        stroke: document.querySelector<HTMLElement>('.splash-echo--stroke'),
+      };
+      const hudLayer = document.querySelector<HTMLElement>('.splash-frame');
+      const levelEl = document.querySelector<HTMLElement>('.splash-level');
+      const azEl = document.querySelector<HTMLElement>('[data-az]');
+      const tagEl = document.querySelector<HTMLElement>('.splash-tag');
+      const charEls = Array.from(document.querySelectorAll<HTMLElement>('.splash-char'));
+      let charCenters: { x: number; y: number }[] = [];
+
+      const measureChars = () => {
+        charCenters = charEls.map((el) => {
+          const rect = el.getBoundingClientRect();
+          return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        });
+      };
+      measureChars();
+      window.addEventListener('resize', measureChars, { passive: true });
+      window.setTimeout(measureChars, 3200 * k);
+
+      // ---------- 指针：准星 + 视差 ----------
+      const reticle = document.querySelector<HTMLElement>('.splash-reticle');
+      let targetX = -200;
+      let targetY = -200;
+      let retX = -200;
+      let retY = -200;
+      let prevX = -200;
+      let prevY = -200;
+      let normX = 0;
+      let normY = 0;
+      let speedEase = 0;
+      let hitGain = 0;
+      let lastAz = -1;
+
+      if (!reduce) {
+        window.addEventListener(
+          'pointermove',
+          (event) => {
+            targetX = event.clientX;
+            targetY = event.clientY;
+            normX = (event.clientX / window.innerWidth - 0.5) * 2;
+            normY = (event.clientY / window.innerHeight - 0.5) * 2;
+          },
+          { passive: true },
+        );
+
+        const follow = (time: number) => {
+          retX += (targetX - retX) * 0.18;
+          retY += (targetY - retY) * 0.18;
+
+          // 指针速度 → 电平增益；点击后再叠加一段衰减脉冲
+          const step = Math.hypot(targetX - prevX, targetY - prevY);
+          prevX = targetX;
+          prevY = targetY;
+          speedEase += (Math.min(step, 36) - speedEase) * 0.25;
+          hitGain *= 0.93;
+          if (levelEl) {
+            const gain = Math.min(2.1, 0.55 + speedEase * 0.035 + hitGain);
+            levelEl.style.setProperty('--gain', gain.toFixed(2));
+          }
+
+          // 方位角与雷达扫描同步
+          const az = Math.floor((time / 5600) * 360) % 360;
+          if (azEl && az !== lastAz) {
+            lastAz = az;
+            azEl.textContent = `AZ ${String(az).padStart(3, '0')}°`;
+          }
+          if (reticle) {
+            reticle.style.transform = `translate3d(${(retX - 22).toFixed(1)}px, ${(retY - 22).toFixed(1)}px, 0)`;
+          }
+          // 四层回声以不同系数反向位移，天然产生色差
+          if (echoes.cyan) {
+            echoes.cyan.style.setProperty('--px', `${(-normX * 14).toFixed(1)}px`);
+            echoes.cyan.style.setProperty('--py', `${(-normY * 10).toFixed(1)}px`);
+          }
+          if (echoes.magenta) {
+            echoes.magenta.style.setProperty('--px', `${(normX * 9).toFixed(1)}px`);
+            echoes.magenta.style.setProperty('--py', `${(normY * 7).toFixed(1)}px`);
+          }
+          if (echoes.stroke) {
+            echoes.stroke.style.setProperty('--px', `${(normX * 5).toFixed(1)}px`);
+            echoes.stroke.style.setProperty('--py', `${(normY * 4).toFixed(1)}px`);
+          }
+          if (hudLayer) {
+            hudLayer.style.setProperty('--px', `${(normX * 6).toFixed(1)}px`);
+            hudLayer.style.setProperty('--py', `${(normY * 5).toFixed(1)}px`);
+          }
+          // 主标题：指针靠近时字被磁力推开并轻微放大
+          if (charCenters.length) {
+            const fieldRadius = Math.min(240, window.innerWidth * 0.3);
+            for (let i = 0; i < charEls.length; i += 1) {
+              const el = charEls[i];
+              const center = charCenters[i];
+              const dx = center.x - retX;
+              const dy = center.y - retY;
+              const dist = Math.hypot(dx, dy) || 1;
+              const force = dist < fieldRadius ? Math.pow(1 - dist / fieldRadius, 2) : 0;
+              const push = force * 26;
+              el.style.setProperty('--dx', `${((dx / dist) * push).toFixed(1)}px`);
+              el.style.setProperty('--dy', `${((dy / dist) * push * 0.7).toFixed(1)}px`);
+              el.style.setProperty('--s', (1 + force * 0.09).toFixed(3));
+            }
+          }
+          // 文字与标题反方向位移，形成层次
+          if (tagEl) {
+            tagEl.style.setProperty('--tx', `${(-normX * 9).toFixed(1)}px`);
+            tagEl.style.setProperty('--ty', `${(-normY * 5).toFixed(1)}px`);
+          }
+          requestAnimationFrame(follow);
+        };
+        requestAnimationFrame(follow);
+      }
+
+      // ---------- 点击：爆炸空气波 + 爆闪 + 抖帧 ----------
+      if (splash && !reduce) {
+        let impactTimer = 0;
+        window.addEventListener(
+          'pointerdown',
+          (event) => {
+            if ((event.target as HTMLElement)?.closest('a')) return;
+            field?.burst(event.clientX, event.clientY);
+            hitGain = 1.5;
+            splash.style.setProperty('--bx', `${event.clientX}px`);
+            splash.style.setProperty('--by', `${event.clientY}px`);
+            window.clearTimeout(impactTimer);
+            splash.classList.remove('is-impact');
+            void splash.offsetWidth;
+            splash.classList.add('is-impact');
+            impactTimer = window.setTimeout(() => splash.classList.remove('is-impact'), 520);
+          },
+          { passive: true },
+        );
+
+        // 按住不放：全场轻微推近 + 提亮
+        window.addEventListener('pointerdown', () => {
+          splash.classList.add('is-charging');
+        });
+        window.addEventListener('pointerup', () => splash.classList.remove('is-charging'));
+        window.addEventListener('pointercancel', () => splash.classList.remove('is-charging'));
+      }
+
+      // ---------- 读数：时钟 + 帧率 ----------
+      const clockEl = document.querySelector<HTMLElement>('[data-clock]');
+      const fpsEl = document.querySelector<HTMLElement>('[data-fps]');
+      if (!reduce) {
+        let frames = 0;
+        let lastFpsAt = performance.now();
+        const meter = () => {
+          frames += 1;
+          const now = performance.now();
+          if (now - lastFpsAt >= 900) {
+            const value = Math.round((frames * 1000) / (now - lastFpsAt));
+            if (fpsEl) fpsEl.textContent = String(Math.min(value, 120));
+            frames = 0;
+            lastFpsAt = now;
+          }
+          requestAnimationFrame(meter);
+        };
+        requestAnimationFrame(meter);
+
+        const tickClock = () => {
+          const now = new Date();
+          const pad = (n: number) => String(n).padStart(2, '0');
+          if (clockEl) {
+            clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+          }
+          window.setTimeout(tickClock, 1000);
+        };
+        tickClock();
+      }
+
+      // ---------- 进入按钮：磁吸 + 能量 + 擦除退场 ----------
+      const enter = document.querySelector<HTMLElement>('[data-enter]');
+      if (enter) {
+        if (!reduce && fine) {
+          const strength = 16;
+          enter.addEventListener('pointermove', (event) => {
+            const rect = enter.getBoundingClientRect();
+            const mx = ((event.clientX - rect.left) / rect.width - 0.5) * strength;
+            const my = ((event.clientY - rect.top) / rect.height - 0.5) * strength;
+            enter.style.setProperty('--mag-x', `${mx.toFixed(1)}px`);
+            enter.style.setProperty('--mag-y', `${my.toFixed(1)}px`);
+          });
+          enter.addEventListener('pointerenter', () => {
+            splash?.classList.add('is-focus');
+          });
+          enter.addEventListener('pointerleave', () => {
+            splash?.classList.remove('is-focus');
+            enter.style.setProperty('--mag-x', '0px');
+            enter.style.setProperty('--mag-y', '0px');
+          });
+        }
+
+        enter.addEventListener('click', (event) => {
+          if (reduce || !splash) return;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          if (splash.classList.contains('is-exiting')) return;
+          field?.burst(window.innerWidth / 2, window.innerHeight * 0.5);
+          splash.classList.add('is-done', 'is-exiting');
+          window.setTimeout(() => {
+            window.location.href = '/home';
+          }, 520);
+        });
+      }
+
+      // ---------- 键盘：Enter 进入，Esc 跳过 ----------
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.repeat) {
+          document.querySelector<HTMLAnchorElement>('[data-enter]')?.click();
+        }
+        if (event.key === 'Escape' && splash && !splash.classList.contains('is-done')) {
+          splash.classList.add('is-done');
+          root.removeAttribute('data-splash');
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .splash-body {
+    min-height: 100dvh;
+  }
+
+  .splash {
+    --k: 1;
+    --d: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding: clamp(18px, 3vw, 32px);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  html[data-splash='quick'] .splash {
+    --k: 0.34;
+    --d: 0.58;
+  }
+
+  /* 入场隐藏态：避免脚本启动前闪烁 */
+  html[data-splash] .splash:not(.is-done) [data-boot] {
+    opacity: 0;
+  }
+
+  html[data-splash] .splash:not(.is-done) .splash-char {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  html[data-splash] .splash:not(.is-done) .splash-enter__bg {
+    transform: scaleX(0);
+  }
+
+  html[data-splash] .splash:not(.is-done) .splash-enter {
+    border-color: transparent;
+  }
+
+  html[data-splash] .splash:not(.is-done) .splash-enter__label,
+  html[data-splash] .splash:not(.is-done) .splash-enter__arrow,
+  html[data-splash] .splash:not(.is-done) .splash-enter__corner {
+    opacity: 0;
+  }
+
+  .splash :is([data-boot], .splash-char, .splash-enter, .splash-enter__bg, .splash-enter__label, .splash-enter__arrow, .splash-enter__corner) {
+    animation-duration: calc(var(--dur, 500ms) * var(--d, 1));
+    animation-delay: calc(var(--base, 0ms) * var(--k, 1));
+    animation-fill-mode: both;
+  }
+
+  html[data-splash] .splash.is-booting .splash-frame__line {
+    animation-name: frame-draw;
+  }
+
+  /* 网点底纹：圆形擦除 */
+  .splash-field {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: radial-gradient(var(--text) 1px, transparent 1px);
+    background-size: 5px 5px;
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  html[data-splash] .splash.is-booting .splash-field {
+    --dur: 900ms;
+    --base: 60ms;
+    animation-name: field-in;
+  }
+
+  @keyframes field-in {
+    from {
+      opacity: 0;
+      clip-path: circle(0% at 50% 55%);
+    }
+    to {
+      opacity: 0.05;
+      clip-path: circle(145% at 50% 55%);
+    }
+  }
+
+  /* CRT 扫描线 */
+  .splash-scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(231, 230, 225, 0.06) 0 1px,
+      transparent 1px 4px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  html[data-theme='light'] .splash-scanlines {
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(18, 19, 22, 0.07) 0 1px,
+      transparent 1px 4px
+    );
+    mix-blend-mode: multiply;
+  }
+
+  .splash.is-done .splash-scanlines {
+    animation: scan-drift 9s linear infinite;
+  }
+
+  @keyframes scan-drift {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(4px);
+    }
+  }
+
+  /* 巨型描边幽灵字 */
+  .splash-ghost {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 0;
+    font-family: var(--font-display);
+    font-size: clamp(160px, 30vw, 420px);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--line);
+    opacity: 0.45;
+    transform: translate(-38%, -52%);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  html[data-theme='light'] .splash-ghost {
+    -webkit-text-stroke-color: rgba(18, 19, 22, 0.12);
+  }
+
+  html[data-splash] .splash.is-booting .splash-ghost {
+    --dur: 820ms;
+    --base: 420ms;
+    animation-name: ghost-in;
+  }
+
+  @keyframes ghost-in {
+    from {
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      opacity: 0.45;
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  .splash.is-done .splash-ghost {
+    animation: splash-drift 16s var(--ease-inout) infinite alternate;
+  }
+
+  /* 框线绘制 */
+  .splash-frame {
+    position: absolute;
+    inset: clamp(12px, 2vw, 24px);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .splash-frame__line {
+    position: absolute;
+    background: var(--line-strong);
+    opacity: 1;
+  }
+
+  .splash-frame__line--t,
+  .splash-frame__line--b {
+    left: 0;
+    width: 100%;
+    height: 1px;
+    transform: scaleX(1);
+  }
+
+  .splash-frame__line--t {
+    top: 0;
+    transform-origin: left;
+    --base: 0ms;
+  }
+
+  .splash-frame__line--b {
+    bottom: 0;
+    transform-origin: right;
+    --base: 120ms;
+  }
+
+  .splash-frame__line--l,
+  .splash-frame__line--r {
+    top: 0;
+    height: 100%;
+    width: 1px;
+    transform: scaleY(1);
+  }
+
+  .splash-frame__line--l {
+    left: 0;
+    transform-origin: top;
+    --base: 60ms;
+  }
+
+  .splash-frame__line--r {
+    right: 0;
+    transform-origin: bottom;
+    --base: 180ms;
+  }
+
+  html[data-splash] .splash.is-booting .splash-frame__line {
+    --dur: 560ms;
+  }
+
+  @keyframes frame-draw {
+    from {
+      opacity: 0.4;
+      transform: scale(0);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .splash-frame .hud-corner {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* 启动进度：贴着底部框线生长 */
+  .splash-progress {
+    position: absolute;
+    right: clamp(12px, 2vw, 24px);
+    bottom: clamp(12px, 2vw, 24px);
+    left: clamp(12px, 2vw, 24px);
+    z-index: 5;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 420ms var(--ease-quart) 120ms;
+    pointer-events: none;
+  }
+
+  html[data-splash] .splash.is-booting .splash-progress {
+    opacity: 1;
+  }
+
+  .splash-progress__bar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  html[data-splash] .splash.is-booting .splash-progress__bar {
+    animation: boot-progress calc(2700ms * var(--k)) linear both;
+  }
+
+  @keyframes boot-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* 三道扫描带 */
+  .splash-bars {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .splash-bar {
+    position: absolute;
+    left: 0;
+    width: 34vw;
+    height: 1px;
+    opacity: 0;
+    transform: translateX(-40vw);
+  }
+
+  .splash-bar--1 {
+    top: 26%;
+    background: var(--accent);
+    --base: 160ms;
+  }
+
+  .splash-bar--2 {
+    top: 52%;
+    height: 2px;
+    background: var(--accent-2);
+    --base: 250ms;
+  }
+
+  .splash-bar--3 {
+    top: 76%;
+    background: var(--accent-3);
+    --base: 330ms;
+  }
+
+  html[data-splash] .splash.is-booting .splash-bar {
+    --dur: 780ms;
+    animation-name: bar-sweep;
+  }
+
+  @keyframes bar-sweep {
+    0% {
+      opacity: 0;
+      transform: translateX(-40vw);
+    }
+    15% {
+      opacity: 0.75;
+    }
+    70% {
+      opacity: 0.75;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(120vw);
+    }
+  }
+
+  /* 顶栏与底栏 */
+  .splash-top,
+  .splash-foot {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+
+  html[data-splash] .splash.is-booting .splash-top > span,
+  html[data-splash] .splash.is-booting .splash-foot > span {
+    --dur: 420ms;
+    animation-name: fade-up;
+  }
+
+  .splash-top {
+    padding: 10px 6px 0;
+  }
+
+  .splash-foot {
+    padding: 0 6px 10px;
+  }
+
+  /* 主内容区 */
+  .splash-core {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    width: min(860px, 100%);
+    margin: 0 auto;
+    padding: 24px 6px;
+  }
+
+  .splash-sticker-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  html[data-splash] .splash.is-booting .splash-sticker-row {
+    --dur: 500ms;
+    animation-name: sticker-in;
+  }
+
+  @keyframes sticker-in {
+    from {
+      opacity: 0;
+      transform: translateY(-18px) rotate(-8deg);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+  }
+
+  .splash-ver {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+
+  .splash-title-wrap {
+    position: relative;
+    margin-top: clamp(20px, 4vw, 34px);
+  }
+
+  /* 标题上方的定位切标 */
+  .splash-cut {
+    position: absolute;
+    top: -12px;
+    left: 2px;
+    width: 46px;
+    height: 2px;
+    background: var(--accent);
+    transform-origin: left;
+  }
+
+  html[data-splash] .splash.is-booting .splash-cut {
+    --dur: 420ms;
+    animation-name: cut-in;
+  }
+
+  @keyframes cut-in {
+    from {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  .splash-title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(72px, 17vw, 220px);
+    line-height: 0.86;
+    letter-spacing: -0.04em;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .splash-char {
+    display: inline-block;
+    will-change: transform, opacity, translate;
+    translate: var(--dx, 0px) var(--dy, 0px);
+    scale: var(--s, 1);
+    transition:
+      translate 180ms var(--ease-quart),
+      scale 180ms var(--ease-quart);
+  }
+
+  html[data-splash] .splash.is-booting .splash-char {
+    --dur: 640ms;
+    animation-name: char-in;
+  }
+
+  @keyframes char-in {
+    0% {
+      opacity: 0;
+      transform: translateY(0.42em) skewX(-8deg);
+      clip-path: inset(0 0 100% 0);
+      text-shadow:
+        6px 0 var(--accent-2),
+        -6px 0 var(--accent-3);
+    }
+    55% {
+      opacity: 1;
+      clip-path: inset(0 0 0 0);
+    }
+    100% {
+      opacity: 1;
+      transform: none;
+      clip-path: inset(-12% -6% -12% -6%);
+      text-shadow: 0 0 transparent;
+    }
+  }
+
+  /* 就绪后的偶发 RGB 错位 + 常驻呼吸 */
+  .splash.is-done .splash-char {
+    animation:
+      splash-glitch 5.6s linear infinite,
+      char-breathe 2.6s var(--ease-inout) infinite alternate;
+    animation-delay:
+      0s,
+      var(--idle-delay, 0s);
+  }
+
+  @keyframes char-breathe {
+    from {
+      filter: brightness(1);
+    }
+    to {
+      filter: brightness(1.16);
+    }
+  }
+
+  /* 点击：逐字被冲击波掀动 */
+  .splash.is-impact .splash-char {
+    animation: char-blast 460ms var(--ease-expo) both;
+    animation-delay: var(--blast-delay, 0s);
+  }
+
+  @keyframes char-blast {
+    0% {
+      transform: none;
+      text-shadow: none;
+    }
+    18% {
+      transform: translateY(-0.06em) skewX(-7deg) scale(1.05);
+      text-shadow:
+        6px 0 var(--accent-2),
+        -6px 0 var(--accent-3);
+    }
+    55% {
+      transform: translateY(0.01em) skewX(3deg) scale(1.01);
+      text-shadow:
+        -3px 0 var(--accent-2),
+        3px 0 var(--accent-3);
+    }
+    100% {
+      transform: none;
+      text-shadow: none;
+    }
+  }
+
+  @keyframes splash-glitch {
+    0%,
+    91%,
+    100% {
+      text-shadow: none;
+    }
+    92% {
+      text-shadow:
+        4px 0 var(--accent-2),
+        -4px 0 var(--accent-3);
+    }
+    94% {
+      text-shadow:
+        -4px 0 var(--accent-2),
+        4px 0 var(--accent-3);
+    }
+    96% {
+      text-shadow: none;
+    }
+  }
+
+  .splash-rule-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: clamp(18px, 3vw, 28px);
+  }
+
+  .splash-rule {
+    width: clamp(120px, 18vw, 220px);
+    height: 8px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--accent) 0 7px,
+      transparent 7px 11px
+    );
+    transform-origin: left;
+  }
+
+  html[data-splash] .splash.is-booting .splash-rule {
+    --dur: 520ms;
+    animation-name: rule-in;
+  }
+
+  @keyframes rule-in {
+    from {
+      opacity: 0;
+      transform: scaleX(0);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  .splash-rule-tick {
+    width: 10px;
+    height: 10px;
+    background: var(--accent-2);
+    transform: rotate(45deg) scale(1);
+  }
+
+  html[data-splash] .splash.is-booting .splash-rule-tick {
+    --dur: 320ms;
+    animation-name: tick-in;
+  }
+
+  @keyframes tick-in {
+    from {
+      opacity: 0;
+      transform: rotate(45deg) scale(0);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(45deg) scale(1);
+    }
+  }
+
+  .splash-tag {
+    margin-top: clamp(16px, 2.4vw, 24px);
+    font-size: clamp(16px, 2vw, 21px);
+    line-height: 1.6;
+  }
+
+  html[data-splash] .splash.is-booting .splash-tag {
+    --dur: 520ms;
+    animation-name: line-in;
+  }
+
+  .splash-tag-en {
+    margin-left: 10px;
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  /* 启动日志 */
+  .splash-boot {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: clamp(24px, 4vw, 40px) 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+
+  .splash-boot-line {
+    opacity: 1;
+  }
+
+  html[data-splash] .splash.is-booting .splash-boot-line {
+    --dur: 420ms;
+    animation-name: line-in;
+  }
+
+  @keyframes line-in {
+    from {
+      opacity: 0;
+      transform: translateX(-14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .splash-boot-ok {
+    margin-right: 8px;
+    color: var(--accent);
+  }
+
+  .splash-boot-caret {
+    width: 9px;
+    height: 12px;
+    margin-top: 2px;
+  }
+
+  html[data-splash] .splash.is-booting .splash-boot-caret {
+    --dur: 320ms;
+    animation-name: fade-up;
+  }
+
+  .splash-boot-caret span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--accent);
+    animation: caret-blink 720ms steps(1) infinite;
+  }
+
+  @keyframes caret-blink {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .splash.is-done .splash-boot-caret {
+    opacity: 0;
+    transition: opacity var(--dur-2) linear;
+  }
+
+  /* 进入按钮：四角 bracket 拼装 + 底色擦除 */
+  .splash-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: clamp(28px, 4vw, 44px);
+  }
+
+  .splash-enter {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 34px;
+    border: 2px solid var(--accent);
+    background: transparent;
+    color: var(--accent-ink);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    overflow: hidden;
+    transform: translate(var(--mag-x, 0px), var(--mag-y, 0px));
+    transition: transform var(--dur-3) var(--ease-spring);
+  }
+
+  .splash-enter__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: var(--accent);
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  html[data-splash] .splash.is-booting .splash-enter {
+    --dur: 380ms;
+    --base: 1820ms;
+    animation-name: enter-border-in;
+  }
+
+  @keyframes enter-border-in {
+    from {
+      border-color: transparent;
+    }
+    to {
+      border-color: var(--accent);
+    }
+  }
+
+  html[data-splash] .splash.is-booting .splash-enter__bg {
+    --dur: 480ms;
+    --base: 1900ms;
+    animation-name: enter-fill;
+  }
+
+  @keyframes enter-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .splash-enter__label,
+  .splash-enter__arrow {
+    position: relative;
+    z-index: 1;
+    opacity: 1;
+  }
+
+  html[data-splash] .splash.is-booting .splash-enter__label,
+  html[data-splash] .splash.is-booting .splash-enter__arrow {
+    --dur: 380ms;
+    --base: 2080ms;
+    animation-name: fade-up;
+  }
+
+  .splash-enter__arrow {
+    transition: transform var(--dur-2) var(--ease-quart);
+  }
+
+  .splash-enter:hover .splash-enter__arrow {
+    transform: translateX(5px);
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .splash-enter__corner {
+    position: absolute;
+    z-index: 2;
+    width: 9px;
+    height: 9px;
+    border: 1px solid var(--accent);
+    opacity: 0.9;
+  }
+
+  .splash-enter__corner--tl {
+    top: -7px;
+    left: -7px;
+    border-right: 0;
+    border-bottom: 0;
+    --base: 1820ms;
+  }
+
+  .splash-enter__corner--tr {
+    top: -7px;
+    right: -7px;
+    border-left: 0;
+    border-bottom: 0;
+    --base: 1860ms;
+  }
+
+  .splash-enter__corner--bl {
+    bottom: -7px;
+    left: -7px;
+    border-right: 0;
+    border-top: 0;
+    --base: 1900ms;
+  }
+
+  .splash-enter__corner--br {
+    bottom: -7px;
+    right: -7px;
+    border-left: 0;
+    border-top: 0;
+    --base: 1940ms;
+  }
+
+  html[data-splash] .splash.is-booting .splash-enter__corner {
+    --dur: 300ms;
+    animation-name: corner-in;
+  }
+
+  @keyframes corner-in {
+    from {
+      opacity: 0;
+      transform: scale(1.8);
+    }
+    to {
+      opacity: 0.9;
+      transform: scale(1);
+    }
+  }
+
+  .splash.is-done .splash-enter::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border: 1px solid var(--accent);
+    pointer-events: none;
+    animation: splash-ping 2.6s var(--ease-quart) infinite;
+  }
+
+  @keyframes splash-ping {
+    0%,
+    100% {
+      opacity: 0;
+      transform: scale(0.98);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+  }
+
+  .splash-hint {
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+
+  html[data-splash] .splash.is-booting .splash-hint {
+    --dur: 380ms;
+    animation-name: fade-up;
+  }
+
+  /* 旋转准星 */
+  .splash-cross {
+    position: absolute;
+    top: 50%;
+    right: clamp(24px, 6vw, 96px);
+    z-index: 1;
+    width: clamp(90px, 12vw, 150px);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .splash-cross svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  html[data-splash] .splash.is-booting .splash-cross {
+    --dur: 720ms;
+    animation-name: cross-in;
+  }
+
+  @keyframes cross-in {
+    from {
+      opacity: 0;
+      transform: translateY(-50%) scale(1.35) rotate(-24deg);
+    }
+    to {
+      opacity: 0.75;
+      transform: translateY(-50%) scale(1) rotate(0deg);
+    }
+  }
+
+  .splash.is-done .splash-cross svg {
+    animation: splash-spin 26s linear infinite;
+  }
+
+  .splash.is-done .splash-cross svg circle:nth-child(2) {
+    animation: cross-dash 12s linear infinite reverse;
+  }
+
+  @keyframes cross-dash {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes splash-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 右缘竖排标注 */
+  .splash-side {
+    position: absolute;
+    top: 50%;
+    right: clamp(26px, 3.4vw, 44px);
+    z-index: 2;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    transform: translateY(-50%) rotate(90deg);
+    pointer-events: none;
+  }
+
+  html[data-splash] .splash.is-booting .splash-side {
+    --dur: 500ms;
+    animation-name: side-in;
+  }
+
+  @keyframes side-in {
+    from {
+      opacity: 0;
+      transform: translateY(-50%) rotate(90deg) translateX(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%) rotate(90deg);
+    }
+  }
+
+  /* ============ 信号仪表：电平 / 频扫 / 锁定 / 雷达 ============ */
+
+  /* 左下：信号电平，随指针速度与点击能量起伏 */
+  .splash-level {
+    position: absolute;
+    bottom: clamp(104px, 15vh, 148px);
+    left: clamp(18px, 3vw, 40px);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .splash-level__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 26px;
+    transform-origin: bottom;
+    transform: scaleY(var(--gain, 1));
+  }
+
+  .splash-level__bar {
+    width: 3px;
+    height: 100%;
+    transform-origin: bottom;
+    background: linear-gradient(to top, var(--accent), var(--accent-2));
+    opacity: 0.8;
+    animation: level-dance var(--d, 0.7s) var(--ease-inout) infinite alternate;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes level-dance {
+    from {
+      transform: scaleY(var(--from, 0.3));
+    }
+    to {
+      transform: scaleY(var(--to, 0.8));
+    }
+  }
+
+  .splash-level__tag {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+
+  html[data-splash] .splash.is-booting .splash-level {
+    --dur: 720ms;
+    animation-name: level-in;
+  }
+
+  @keyframes level-in {
+    from {
+      opacity: 0;
+      clip-path: inset(0 0 0 100%);
+    }
+    to {
+      opacity: 1;
+      clip-path: inset(-20% -10%);
+    }
+  }
+
+  /* 过载：点击瞬间顶部两根转警示黄 */
+  .splash.is-impact .splash-level__bar:nth-child(n + 10) {
+    background: linear-gradient(to top, var(--warning), var(--accent-3));
+  }
+
+  /* 左下角：频段扫描 */
+  .splash-scan {
+    position: absolute;
+    bottom: clamp(52px, 7vh, 72px);
+    left: clamp(18px, 3vw, 40px);
+    z-index: 2;
+    width: min(200px, 36vw);
+    height: 40px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .splash-scan__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .splash-scan__bar {
+    flex: 1;
+    height: 100%;
+    transform-origin: bottom;
+    background: rgba(216, 255, 62, 0.24);
+    animation: scan-bar var(--d, 1.2s) var(--ease-inout) infinite alternate;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes scan-bar {
+    from {
+      transform: scaleY(0.18);
+    }
+    to {
+      transform: scaleY(var(--to, 0.6));
+    }
+  }
+
+  .splash-scan__sweep {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    width: 30%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(216, 255, 62, 0.5),
+      transparent
+    );
+    mix-blend-mode: screen;
+    animation: scan-sweep 3.6s linear infinite;
+  }
+
+  @keyframes scan-sweep {
+    from {
+      transform: translateX(-120%);
+    }
+    to {
+      transform: translateX(420%);
+    }
+  }
+
+  .splash-scan__tag {
+    position: absolute;
+    top: -16px;
+    right: 0;
+    z-index: 2;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+  }
+
+  html[data-splash] .splash.is-booting .splash-scan {
+    --dur: 760ms;
+    animation-name: scan-in;
+  }
+
+  @keyframes scan-in {
+    from {
+      opacity: 0;
+      transform: translateX(-22px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* 右上：目标锁定框 */
+  .splash-lock {
+    position: absolute;
+    top: 16%;
+    right: 14%;
+    z-index: 2;
+    width: 30px;
+    height: 30px;
+    pointer-events: none;
+    transition: transform 260ms var(--ease-spring);
+  }
+
+  .splash-lock__dash {
+    position: absolute;
+    inset: 0;
+    border: 1px dashed rgba(255, 61, 129, 0.5);
+    animation: lock-spin 14s linear infinite;
+  }
+
+  @keyframes lock-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .splash-lock__corner {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--accent-3);
+    animation: lock-breathe 2.6s var(--ease-inout) infinite alternate;
+  }
+
+  .splash-lock__corner--tl {
+    top: -4px;
+    left: -4px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .splash-lock__corner--tr {
+    top: -4px;
+    right: -4px;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
+  .splash-lock__corner--bl {
+    bottom: -4px;
+    left: -4px;
+    border-right: 0;
+    border-top: 0;
+  }
+
+  .splash-lock__corner--br {
+    right: -4px;
+    bottom: -4px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  @keyframes lock-breathe {
+    from {
+      opacity: 0.35;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  .splash-lock__matrix {
+    position: absolute;
+    inset: 6px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    place-items: center;
+  }
+
+  .splash-lock__matrix span {
+    width: 2px;
+    height: 2px;
+    background: var(--accent-3);
+    opacity: 0.2;
+    animation: lock-dot 1.8s steps(2) infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes lock-dot {
+    0%,
+    100% {
+      opacity: 0.18;
+    }
+    50% {
+      opacity: 0.95;
+    }
+  }
+
+  .splash-lock__tag {
+    position: absolute;
+    bottom: -2px;
+    left: 100%;
+    margin-left: 8px;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  html[data-splash] .splash.is-booting .splash-lock {
+    --dur: 620ms;
+    animation-name: lock-in;
+  }
+
+  @keyframes lock-in {
+    from {
+      opacity: 0;
+      transform: scale(1.8) rotate(-18deg);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .splash.is-impact .splash-lock {
+    transform: scale(0.84);
+  }
+
+  /* 右侧雷达：扫描扇形 + 环绕亮点 + 方位角读数 */
+  .splash-cross__sweep {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      rgba(216, 255, 62, 0.24),
+      rgba(216, 255, 62, 0.05) 24%,
+      transparent 42%
+    );
+    -webkit-mask-image: radial-gradient(circle, transparent 26%, #000 27% 98%, transparent 99%);
+    mask-image: radial-gradient(circle, transparent 26%, #000 27% 98%, transparent 99%);
+    mix-blend-mode: screen;
+    animation: radar-sweep 5.6s linear infinite;
+  }
+
+  @keyframes radar-sweep {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .splash-cross__blip {
+    position: absolute;
+    inset: 0;
+    animation: radar-blip 5.6s linear infinite;
+  }
+
+  .splash-cross__blip::after {
+    content: '';
+    position: absolute;
+    top: 7%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    margin-left: -2px;
+    border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 8px var(--accent-2);
+  }
+
+  @keyframes radar-blip {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .splash-cross__az {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* 指针准星 */
+  .splash-reticle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    opacity: 0.5;
+    pointer-events: none;
+    mix-blend-mode: difference;
+    transform: translate3d(-200px, -200px, 0);
+  }
+
+  .splash-reticle__h,
+  .splash-reticle__v {
+    position: absolute;
+    background: var(--accent);
+  }
+
+  .splash-reticle__h {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+
+  .splash-reticle__v {
+    top: 0;
+    left: 50%;
+    width: 1px;
+    height: 100%;
+  }
+
+  .splash-reticle__c {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+  }
+
+  .splash.is-done .splash-reticle {
+    transition: opacity var(--dur-2) linear;
+  }
+
+  /* 进入退场：全屏对角警示擦除 */
+  .splash-cover {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        rgba(14, 15, 18, 0.12) 0 16px,
+        transparent 16px 34px
+      ),
+      var(--accent);
+    transform: translateY(101%);
+    pointer-events: none;
+  }
+
+  .splash.is-exiting .splash-cover {
+    animation: cover-up 520ms var(--ease-expo) both;
+  }
+
+  .splash.is-exiting .splash-core,
+  .splash.is-exiting .splash-top,
+  .splash.is-exiting .splash-foot {
+    opacity: 0;
+    transform: translateY(-14px);
+    transition:
+      opacity var(--dur-3) var(--ease-expo),
+      transform var(--dur-3) var(--ease-expo);
+  }
+
+  .splash.is-exiting .splash-title {
+    animation: exit-split 520ms var(--ease-expo) both;
+  }
+
+  .splash.is-exiting .splash-reticle {
+    opacity: 0;
+  }
+
+  @keyframes cover-up {
+    from {
+      transform: translateY(101%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes exit-split {
+    0% {
+      transform: none;
+      text-shadow: none;
+    }
+    30% {
+      transform: translateX(-6px);
+      text-shadow:
+        8px 0 var(--accent-2),
+        -8px 0 var(--accent-3);
+    }
+    60% {
+      transform: translateX(4px);
+      text-shadow:
+        -6px 0 var(--accent-2),
+        6px 0 var(--accent-3);
+    }
+    100% {
+      transform: translateY(-10px);
+      text-shadow: none;
+    }
+  }
+
+  @keyframes splash-drift {
+    from {
+      transform: translate(-38%, -52%);
+    }
+    to {
+      transform: translate(-42%, -48%);
+    }
+  }
+
+  /* ============ 常驻动效：文字群与邻近元素 ============ */
+  .splash-tag {
+    translate: var(--tx, 0px) var(--ty, 0px);
+    transition: translate 200ms var(--ease-quart);
+  }
+
+  .splash.is-done .splash-rule {
+    animation: rule-flow 1.6s linear infinite;
+  }
+
+  @keyframes rule-flow {
+    to {
+      background-position: 11px 0;
+    }
+  }
+
+  .splash.is-done .splash-rule-tick {
+    animation: tick-pulse 1.5s var(--ease-inout) infinite alternate;
+  }
+
+  @keyframes tick-pulse {
+    from {
+      opacity: 0.45;
+      transform: rotate(45deg) scale(0.82);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(45deg) scale(1.16);
+    }
+  }
+
+  .splash.is-done .splash-cut {
+    animation: cut-pulse 3.2s var(--ease-inout) infinite alternate;
+    transform-origin: left;
+  }
+
+  @keyframes cut-pulse {
+    from {
+      opacity: 0.45;
+      transform: scaleX(0.55);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  .splash.is-done .splash-tag {
+    animation: tag-flicker 5.5s steps(1) infinite;
+  }
+
+  @keyframes tag-flicker {
+    0%,
+    93%,
+    100% {
+      opacity: 1;
+    }
+    94% {
+      opacity: 0.35;
+    }
+    95% {
+      opacity: 1;
+    }
+    96% {
+      opacity: 0.65;
+    }
+    97% {
+      opacity: 1;
+    }
+  }
+
+  .splash.is-impact .splash-tag {
+    animation: tag-hit 460ms var(--ease-expo) both;
+  }
+
+  @keyframes tag-hit {
+    0% {
+      transform: none;
+    }
+    22% {
+      transform: translateX(9px) skewX(-3deg);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  .splash.is-done .splash-boot-ok {
+    animation: ok-blink 1.4s steps(2) infinite;
+    animation-delay: var(--ok-delay, 0s);
+  }
+
+  @keyframes ok-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.2;
+    }
+  }
+
+  .splash.is-done .splash-hint {
+    animation: hint-blink 2s steps(2) infinite;
+  }
+
+  @keyframes hint-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  .splash.is-done .splash-sticker-row {
+    animation: sticker-breathe 5s var(--ease-inout) infinite alternate;
+  }
+
+  @keyframes sticker-breathe {
+    from {
+      opacity: 0.8;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .splash.is-done .splash-enter__arrow {
+    animation: arrow-nudge 1.8s var(--ease-inout) infinite alternate;
+  }
+
+  @keyframes arrow-nudge {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(6px);
+    }
+  }
+
+  .splash.is-done .splash-side {
+    animation: side-drift 9s var(--ease-inout) infinite alternate;
+  }
+
+  @keyframes side-drift {
+    from {
+      opacity: 0.7;
+      transform: translateY(-50%) rotate(90deg) translateX(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%) rotate(90deg) translateX(6px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .splash.is-done .splash-title,
+    .splash.is-done .splash-scanlines,
+    .splash.is-done .splash-cross svg,
+    .splash.is-done .splash-cross svg circle:nth-child(2),
+    .splash.is-done .splash-ghost,
+    .splash.is-done .splash-enter::after,
+    .splash-boot-caret span,
+    .splash.is-done .splash-rule,
+    .splash.is-done .splash-rule-tick,
+    .splash.is-done .splash-cut,
+    .splash.is-done .splash-tag,
+    .splash.is-done .splash-boot-ok,
+    .splash.is-done .splash-hint,
+    .splash.is-done .splash-sticker-row,
+    .splash.is-done .splash-enter__arrow,
+    .splash.is-done .splash-side,
+    .splash.is-done .splash-char,
+    .splash-level__bar,
+    .splash-scan__bar,
+    .splash-scan__sweep,
+    .splash-lock__dash,
+    .splash-lock__corner,
+    .splash-lock__matrix span,
+    .splash-cross__sweep,
+    .splash-cross__blip {
+      animation: none;
+    }
+
+    .splash-reticle {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .splash-cross,
+    .splash-side {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .splash-ver,
+    .splash-hint {
+      display: none;
+    }
+
+    .splash-boot {
+      font-size: 10px;
+    }
+
+    .splash-lock {
+      top: 12%;
+      right: 8%;
+    }
+
+    .splash-scan__tag {
+      display: none;
+    }
+  }
+
+  /* ============ 狂暴层：信号场 / 颗粒 / 撕裂 / 视差 ============ */
+
+  .splash-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: opacity 320ms var(--ease-quart);
+  }
+
+  .splash.is-focus .splash-canvas {
+    opacity: 0.3;
+  }
+
+  /* 信号场随 CRT 通电一起亮起 */
+  html[data-splash] .splash.is-booting .splash-canvas {
+    animation: canvas-in calc(900ms * var(--d)) var(--ease-quart) both;
+  }
+
+  @keyframes canvas-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* CRT 暗角 */
+  .splash-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 118% 88% at 50% 48%, transparent 52%, rgba(0, 0, 0, 0.62) 100%),
+      radial-gradient(ellipse 70% 42% at 50% 100%, rgba(216, 255, 62, 0.07), transparent 72%);
+  }
+
+  html[data-theme='light'] .splash-vignette {
+    opacity: 1;
+    background:
+      radial-gradient(ellipse 120% 92% at 50% 48%, transparent 58%, rgba(18, 19, 22, 0.16) 100%),
+      radial-gradient(ellipse 72% 42% at 50% 100%, rgba(90, 107, 0, 0.05), transparent 72%);
+  }
+
+  /* 浅色模式：细线与信号元素改用深麦绿，奶油底上仍清晰 */
+  html[data-theme='light'] .splash-grain {
+    opacity: 0.055;
+    mix-blend-mode: multiply;
+  }
+
+  html[data-theme='light'] .splash-progress__bar,
+  html[data-theme='light'] .splash-boot-caret span,
+  html[data-theme='light'] .splash-cut,
+  html[data-theme='light'] .splash-bar--1 {
+    background: var(--accent-text);
+  }
+
+  html[data-theme='light'] .splash-boot-ok {
+    color: var(--accent-text);
+  }
+
+  html[data-theme='light'] .splash-rule {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--accent-text) 0 7px,
+      transparent 7px 11px
+    );
+  }
+
+  html[data-theme='light'] .splash-level__bar {
+    background: linear-gradient(to top, var(--accent-text), var(--accent-2));
+  }
+
+  html[data-theme='light'] .splash-scan__bar {
+    background: rgba(90, 107, 0, 0.26);
+  }
+
+  html[data-theme='light'] .splash-scan__sweep {
+    background: linear-gradient(90deg, transparent, rgba(90, 107, 0, 0.42), transparent);
+    mix-blend-mode: multiply;
+  }
+
+  html[data-theme='light'] .splash-cross__sweep {
+    background: conic-gradient(
+      from 0deg,
+      rgba(90, 107, 0, 0.26),
+      rgba(90, 107, 0, 0.06) 24%,
+      transparent 42%
+    );
+    mix-blend-mode: multiply;
+  }
+
+  html[data-theme='light'] .splash-cross svg circle:nth-of-type(2),
+  html[data-theme='light'] .splash-cross svg circle:nth-of-type(3) {
+    stroke: var(--accent-text);
+  }
+
+  html[data-theme='light'] .splash-lock__dash {
+    border-color: rgba(211, 26, 94, 0.55);
+  }
+
+  html[data-theme='light'] .splash-enter__corner,
+  html[data-theme='light'] .splash.is-done .splash-enter::after {
+    border-color: var(--accent-text);
+  }
+
+  html[data-theme='light'] .splash-enter:focus-visible {
+    outline-color: rgba(90, 107, 0, 0.55);
+  }
+
+  /* 浅色模式下 screen 混合会失效，换成柔和的墨色冲击 */
+  html[data-theme='light'] .splash-flash {
+    background: radial-gradient(
+      circle,
+      rgba(18, 19, 22, 0.18) 0%,
+      rgba(90, 107, 0, 0.26) 26%,
+      rgba(11, 143, 143, 0.09) 44%,
+      transparent 68%
+    );
+    mix-blend-mode: normal;
+  }
+
+  /* 胶片颗粒 */
+  .splash-grain {
+    position: absolute;
+    inset: -10%;
+    z-index: 7;
+    pointer-events: none;
+    opacity: 0.08;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+    mix-blend-mode: overlay;
+    animation: grain-jump 0.7s steps(5) infinite;
+  }
+
+  @keyframes grain-jump {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 180px 180px;
+    }
+  }
+
+  /* 左右刻度尺 */
+  .splash-ruler {
+    position: absolute;
+    top: 15%;
+    bottom: 15%;
+    width: 9px;
+    z-index: 2;
+    opacity: 0.4;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--line-strong) 0 1px,
+      transparent 1px 9px
+    );
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+    transform-origin: center;
+  }
+
+  .splash-ruler--l {
+    left: clamp(12px, 2vw, 22px);
+  }
+
+  .splash-ruler--r {
+    right: clamp(12px, 2vw, 22px);
+  }
+
+  html[data-splash] .splash.is-booting .splash-ruler {
+    --dur: 760ms;
+    animation-name: ruler-in;
+  }
+
+  @keyframes ruler-in {
+    from {
+      opacity: 0;
+      transform: scaleY(0.55);
+    }
+    to {
+      opacity: 0.4;
+      transform: scaleY(1);
+    }
+  }
+
+  /* 顶部实时读数 */
+  .splash-readout {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    color: var(--accent-text);
+  }
+
+  .splash-readout__sep {
+    opacity: 0.4;
+  }
+
+  /* 标题四层回声 */
+  .splash-title-shell {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .splash-echo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-family: var(--font-display);
+    font-size: clamp(72px, 17vw, 220px);
+    line-height: 0.86;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    pointer-events: none;
+    will-change: transform, opacity;
+    opacity: var(--echo-o, 0.14);
+  }
+
+  /* 静态只保留极轻的色差，夸张留给入场动画 */
+  .splash-echo--cyan {
+    --echo-o: 0.16;
+    --ex: 54px;
+    --ey: 18px;
+    color: var(--accent-2);
+    mix-blend-mode: screen;
+    translate: calc(3px + var(--px, 0px)) var(--py, 0px);
+  }
+
+  .splash-echo--magenta {
+    --echo-o: 0.12;
+    --ex: -54px;
+    --ey: -18px;
+    color: var(--accent-3);
+    mix-blend-mode: screen;
+    translate: calc(-3px + var(--px, 0px)) var(--py, 0px);
+  }
+
+  .splash-echo--stroke {
+    --echo-o: 0.1;
+    --ex: 34px;
+    --ey: 22px;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--accent);
+    translate: calc(7px + var(--px, 0px)) calc(5px + var(--py, 0px));
+  }
+
+  html[data-splash] .splash.is-booting .splash-echo {
+    --dur: 760ms;
+    animation-name: echo-in;
+  }
+
+  @keyframes echo-in {
+    0% {
+      opacity: 0;
+      clip-path: inset(0 0 100% 0);
+      transform: translate(var(--ex, 0px), var(--ey, 0px)) scale(1.14);
+    }
+    38% {
+      opacity: 0.92;
+      clip-path: inset(-15% -12%);
+    }
+    64% {
+      opacity: 0.55;
+      transform: translate(calc(var(--ex, 0px) * 0.22), calc(var(--ey, 0px) * 0.22)) scale(1.05);
+    }
+    100% {
+      opacity: var(--echo-o, 0.14);
+      clip-path: inset(-15% -8%);
+      transform: none;
+    }
+  }
+
+  /* 撕裂同期的整屏抖帧 */
+  .splash.is-tearing {
+    animation: screen-shake 160ms steps(3) both;
+  }
+
+  @keyframes screen-shake {
+    0% {
+      transform: translate3d(-2px, 1px, 0);
+    }
+    35% {
+      transform: translate3d(3px, -2px, 0);
+    }
+    65% {
+      transform: translate3d(-3px, 2px, 0);
+    }
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* 按住：全场推近 */
+  .splash-core,
+  .splash-frame {
+    transition: transform 380ms var(--ease-quart);
+  }
+
+  .splash-frame {
+    translate: var(--px, 0px) var(--py, 0px);
+  }
+
+  .splash.is-charging .splash-core,
+  .splash.is-charging .splash-frame {
+    transform: scale(1.014);
+  }
+
+  .splash.is-impact .splash-frame {
+    box-shadow: inset 0 0 0 1px rgba(216, 255, 62, 0.5);
+  }
+
+  /* 点击爆心闪白 */
+  .splash-flash {
+    position: absolute;
+    top: var(--by, 50%);
+    left: var(--bx, 50%);
+    z-index: 5;
+    width: 52vmax;
+    height: 52vmax;
+    pointer-events: none;
+    opacity: 0;
+    translate: -50% -50%;
+    background: radial-gradient(
+      circle,
+      rgba(231, 230, 225, 0.55) 0%,
+      rgba(216, 255, 62, 0.2) 26%,
+      rgba(52, 224, 224, 0.07) 44%,
+      transparent 68%
+    );
+    mix-blend-mode: screen;
+  }
+
+  .splash.is-impact .splash-flash {
+    animation: blast-flash 480ms var(--ease-expo) both;
+  }
+
+  @keyframes blast-flash {
+    0% {
+      opacity: 0.8;
+      transform: scale(0.14);
+    }
+    30% {
+      opacity: 0.42;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.9);
+    }
+  }
+
+  /* 爆心冲击：画布整体被顶了一下 */
+  .splash.is-impact .splash-canvas {
+    animation: canvas-punch 560ms var(--ease-spring) both;
+  }
+
+  @keyframes canvas-punch {
+    0% {
+      transform: scale(1);
+    }
+    16% {
+      transform: scale(1.035);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* 悬停进入按钮：环境压暗 + 外环出现 */
+  .splash-enter {
+    outline: 1px solid transparent;
+    outline-offset: 6px;
+    transition:
+      transform var(--dur-3) var(--ease-spring),
+      outline-color 220ms var(--ease-quart);
+  }
+
+  .splash.is-focus .splash-enter {
+    outline-color: rgba(216, 255, 62, 0.55);
+  }
+
+  @media (max-width: 760px) {
+    .splash-grain {
+      opacity: 0.05;
+    }
+
+    .splash-ruler {
+      display: none;
+    }
+
+    .splash-echo--stroke {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .splash-canvas,
+    .splash-grain,
+    .splash-vignette {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,32 @@
+{
+  "name": "misiro-blog",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && pagefind --site dist",
+    "preview": "astro preview",
+    "check": "astro check",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource/archivo-black": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/noto-sans-sc": "^5.3.1",
+    "@tailwindcss/vite": "^4.3.4",
+    "astro": "^7.4.5",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "pagefind": "^1.6.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-astro": "^1.1.2",
+    "typescript": "5.9"
+  }
+}

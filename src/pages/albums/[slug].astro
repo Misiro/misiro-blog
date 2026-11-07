@@ -1,0 +1,75 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PhotoWall from '../../components/PhotoWall.astro';
+import { getAlbums } from '../../lib/content';
+import { formatDate, padNumber } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const albums = await getAlbums();
+  return albums.map((album) => ({
+    params: { slug: album.id },
+    props: { album },
+  }));
+}
+
+const { album } = Astro.props;
+---
+
+<BaseLayout
+  title={`相册：${album.data.title}`}
+  description={album.data.description ?? `${album.data.title} 相册`}
+  image={album.data.cover}
+>
+  <section class="page-hero album-hero">
+    <div class="container">
+      <nav class="crumbs mono" aria-label="面包屑">
+        <a href="/albums">相册</a>
+        <span aria-hidden="true">/</span>
+        <span class="crumbs__now">{album.data.title}</span>
+      </nav>
+      <h1 class="page-hero__title glitch">{album.data.title}</h1>
+      <p class="page-hero__desc">{album.data.description}</p>
+      <div class="meta-line album-meta">
+        <span>{formatDate(album.data.date)}</span>
+        <span>{padNumber(album.data.photos.length, 2)} PHOTOS</span>
+        <span>← / → 翻页 · ESC 关闭</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <PhotoWall photos={album.data.photos} title={album.data.title} />
+  </div>
+
+  <div class="container album-foot">
+    <a class="btn btn--ghost" href="/albums"><span>← 返回相册</span></a>
+  </div>
+</BaseLayout>
+
+<style>
+  .crumbs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .crumbs__now {
+    color: var(--accent-text);
+  }
+
+  .album-meta {
+    margin-top: 18px;
+  }
+
+  .album-hero {
+    padding-bottom: 32px;
+  }
+
+  .album-foot {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 32px;
+  }
+</style>

@@ -1,0 +1,59 @@
+---
+interface Photo {
+  src: string;
+  caption: string;
+}
+
+interface Props {
+  photos: Photo[];
+  title: string;
+}
+
+const { photos, title } = Astro.props;
+---
+
+<div class="photo-grid" data-photo-grid>
+  {
+    photos.map((photo, index) => (
+      <button
+        class="photo-thumb"
+        type="button"
+        data-src={photo.src}
+        data-caption={photo.caption}
+        aria-label={`查看第 ${index + 1} 张图片：${photo.caption || '无说明'}`}
+      >
+        <img
+          src={photo.src}
+          alt={photo.caption}
+          width="1280"
+          height="960"
+          loading={index < 3 ? 'eager' : 'lazy'}
+        />
+      </button>
+    ))
+  }
+</div>
+
+<div
+  class="lightbox"
+  data-lightbox
+  role="dialog"
+  aria-modal="true"
+  aria-label={`${title} 相册灯箱`}
+  hidden
+>
+  <button class="lightbox__btn lightbox__close" type="button" data-lightbox-close aria-label="关闭灯箱">
+    CLOSE ×
+  </button>
+  <img class="lightbox__img" data-lightbox-img alt="" width="1280" height="960" />
+  <div class="lightbox__bar">
+    <button class="lightbox__btn" type="button" data-lightbox-prev aria-label="上一张">← PREV</button>
+    <span class="lightbox__caption" data-lightbox-caption></span>
+    <span class="lightbox__count" data-lightbox-count></span>
+    <button class="lightbox__btn" type="button" data-lightbox-next aria-label="下一张">NEXT →</button>
+  </div>
+</div>
+
+<script>
+  import '../scripts/lightbox';
+</script>

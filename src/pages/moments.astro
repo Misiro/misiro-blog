@@ -1,0 +1,805 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getMoments } from '../lib/content';
+import {
+  formatClock,
+  formatDate,
+  formatDay,
+  formatMonth,
+  formatStamp,
+  padNumber,
+} from '../lib/format';
+
+const moments = await getMoments();
+const total = moments.length;
+const latest = moments[0];
+const earliest = moments[total - 1];
+
+const DAY = 86_400_000;
+const spanDays =
+  latest && earliest
+    ? Math.max(
+        1,
+        Math.round((latest.data.date.valueOf() - earliest.data.date.valueOf()) / DAY)
+      )
+    : 0;
+
+const gapDays = moments.map((moment, index) => {
+  if (index === 0) return 0;
+  return Math.max(
+    1,
+    Math.round(
+      (moments[index - 1].data.date.valueOf() - moment.data.date.valueOf()) / DAY
+    )
+  );
+});
+
+const gapSize = (days: number) => (days === 0 ? 0 : Math.min(96, 26 + days * 7));
+---
+
+<BaseLayout title="即刻" description="一条向下流动的时间线，记录当时的光线、地点与片段。">
+  <div data-pagefind-body>
+    <section class="page-hero flow-hero">
+      <div class="container">
+        <span class="sticker">MOMENTS / 即刻</span>
+        <h1 class="page-hero__title glitch" data-pagefind-meta="title">即刻</h1>
+        <p class="page-hero__desc">
+          不归档，不分类，也不打算写成文章。时间在这里不是刻度，是水位——句子顺着它往下走。
+        </p>
+        <div class="flow-hero__meta">
+          <span class="flow-hero__live"><i aria-hidden="true"></i> STREAM / 进行中</span>
+          <span class="mono">
+            {padNumber(total, 2)} ENTRIES · SPAN {padNumber(spanDays, 2)} DAYS
+          </span>
+        </div>
+        <span class="sr-only" data-pagefind-meta="type:即刻">即刻</span>
+        {
+          latest && (
+            <span class="sr-only" data-pagefind-meta={`date:${formatDate(latest.data.date)}`}>
+              {formatDate(latest.data.date)}
+            </span>
+          )
+        }
+      </div>
+    </section>
+
+    <section class="flow" data-flow aria-label="即刻时间流">
+      <div class="container">
+        <div class="flow__head">
+          <div class="flow__head-left">
+            <span class="flow__dot" aria-hidden="true"></span>
+            <span class="mono flow__now">NOW / 正在发生</span>
+            {latest && <span class="mono flow__last">LAST {formatStamp(latest.data.date)}</span>}
+          </div>
+          <div class="flow__meter" aria-hidden="true">
+            <span class="flow__meter-fill"></span>
+          </div>
+          <span class="mono flow__readout" data-flow-readout>00%</span>
+        </div>
+
+        <div class="flow__body" data-flow-body>
+          <div class="flow__spine" aria-hidden="true">
+            <span class="flow__spine-flow"></span>
+            <span class="flow__spine-fill"></span>
+          </div>
+
+          {
+            moments.map((moment, index) => (
+              <article
+                class="mom"
+                id={`m-${padNumber(total - index, 2)}`}
+                data-reveal
+                style={`--gap:${gapSize(gapDays[index])}px;`}
+              >
+                <span
+                  class:list={['mom__delta mono', { 'mom__delta--start': index === 0 }]}
+                  aria-hidden="true"
+                >
+                  {index === 0 ? 'START' : `Δ ${padNumber(gapDays[index], 2)}D`}
+                </span>
+                <span class="mom__node" aria-hidden="true"></span>
+
+                <time
+                  class="mom__stamp"
+                  datetime={moment.data.date.toISOString()}
+                >
+                  <span class="mom__day">{formatDay(moment.data.date)}</span>
+                  <span class="mom__month mono">{formatMonth(moment.data.date)}</span>
+                  <span class="mom__clock mono">{formatClock(moment.data.date)}</span>
+                  <span class="mom__no mono">M-{padNumber(total - index, 2)}</span>
+                </time>
+
+                <div class="mom__content">
+                  <p class="mom__body">{moment.data.content}</p>
+
+                  {(moment.data.images.length > 0 || moment.data.video) && (
+                    <div
+                      class:list={[
+                        'mom__media',
+                        { 'mom__media--multi': moment.data.images.length > 1 },
+                      ]}
+                    >
+                      {moment.data.images.map((image) => (
+                        <figure class="shot">
+                          <div class="shot__frame" style={`aspect-ratio: ${image.ratio};`}>
+                            <img
+                              src={image.src}
+                              alt={image.caption || moment.data.content.slice(0, 40)}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
+                          {image.caption && (
+                            <figcaption class="shot__cap mono">{image.caption}</figcaption>
+                          )}
+                        </figure>
+                      ))}
+                      {moment.data.video && (
+                        <video
+                          class="shot__video"
+                          src={moment.data.video}
+                          controls
+                          preload="metadata"
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  <footer class="mom__foot">
+                    {moment.data.address && (
+                      <span class="mom__place">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z" />
+                          <circle cx="12" cy="10" r="2.6" />
+                        </svg>
+                        {moment.data.address}
+                      </span>
+                    )}
+                    {moment.data.from && <span class="mom__from mono">{moment.data.from}</span>}
+                    {moment.data.link && (
+                      <a
+                        class="mom__link mono"
+                        href={moment.data.link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {moment.data.link.title}
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M7 17 17 7M9 7h8v8" />
+                        </svg>
+                      </a>
+                    )}
+                  </footer>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+
+        <div class="flow__end">
+          <span class="mono">END OF STREAM</span>
+          <span class="mono">CONTINUE / ∞</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  /* ---------- 页头 ---------- */
+  .flow-hero__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: clamp(24px, 3vw, 38px);
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 10.5px;
+  }
+
+  .flow-hero__live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+  }
+
+  .flow-hero__live i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: live-pulse 2.4s var(--ease-inout) infinite;
+  }
+
+  @keyframes live-pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(216, 255, 62, 0.45);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 7px rgba(216, 255, 62, 0);
+    }
+  }
+
+  /* ---------- 流动仪表 ---------- */
+  .flow {
+    padding-bottom: clamp(64px, 8vw, 120px);
+  }
+
+  .flow__head {
+    position: sticky;
+    top: calc(var(--header-h) + 1px);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: clamp(14px, 2vw, 26px);
+    padding: 13px 0;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+  }
+
+  .flow__head-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+  }
+
+  .flow__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: live-pulse 2.4s var(--ease-inout) infinite;
+  }
+
+  .flow__now {
+    font-size: 10px;
+    color: var(--accent-text);
+    letter-spacing: 0.1em;
+  }
+
+  .flow__last {
+    color: var(--text-muted);
+    font-size: 9.5px;
+    letter-spacing: 0.05em;
+  }
+
+  .flow__meter {
+    position: relative;
+    flex: 1;
+    min-width: 30px;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .flow__meter-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--flow-progress, 0) * 100%);
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(216, 255, 62, 0.45);
+  }
+
+  .flow__readout {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- 时间河道 ---------- */
+  .flow__body {
+    --stamp-w: clamp(76px, 8.6vw, 112px);
+    --gutter-x: clamp(20px, 3.2vw, 46px);
+    position: relative;
+    margin-top: clamp(30px, 4vw, 52px);
+  }
+
+  .flow__spine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--stamp-w) + var(--gutter-x) / 2);
+    width: 1px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .flow__spine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 1px;
+    background: var(--line);
+  }
+
+  .flow__spine-flow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 20vh;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in srgb, var(--accent) 42%, transparent),
+      transparent
+    );
+    animation: spine-flow 9s linear infinite;
+  }
+
+  @keyframes spine-flow {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(calc(100vh + 40vh));
+    }
+  }
+
+  .flow__spine-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: calc(var(--flow-progress, 0) * 100%);
+    background: linear-gradient(to bottom, transparent, var(--accent));
+    opacity: 0.9;
+  }
+
+  .flow__spine-fill::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translateX(-50%);
+    box-shadow: 0 0 14px rgba(216, 255, 62, 0.5);
+  }
+
+  /* ---------- 单条即刻 ---------- */
+  .mom {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--stamp-w) minmax(0, 1fr);
+    column-gap: var(--gutter-x);
+    margin-top: var(--gap, 0px);
+    align-items: start;
+    scroll-margin-top: calc(var(--header-h) + 80px);
+  }
+
+  .mom__delta {
+    position: absolute;
+    top: calc(var(--gap, 0px) / -2);
+    left: calc(var(--stamp-w) + var(--gutter-x) / 2);
+    z-index: 2;
+    padding: 3px 4px;
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+  }
+
+  .mom__delta--start {
+    top: -18px;
+    color: var(--accent-text);
+  }
+
+  .mom__node {
+    position: absolute;
+    top: 0;
+    left: calc(var(--stamp-w) + var(--gutter-x) / 2);
+    z-index: 2;
+    width: calc(var(--gutter-x) / 2);
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.7s var(--ease-expo) 0.08s;
+  }
+
+  .mom__node::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%, -50%);
+  }
+
+  .mom.is-visible .mom__node {
+    transform: scaleX(1);
+  }
+
+  /* ---------- 时间戳 ---------- */
+  .mom__stamp {
+    position: relative;
+    z-index: 1;
+    padding-right: 4px;
+    text-align: right;
+    background: var(--bg);
+  }
+
+  .mom__day {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(34px, 3.4vw, 50px);
+    line-height: 0.86;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--line-strong);
+    transition: -webkit-text-stroke-color var(--dur-3) var(--ease-quart);
+  }
+
+  .mom:hover .mom__day {
+    -webkit-text-stroke-color: var(--accent-text);
+  }
+
+  .mom__month {
+    display: block;
+    margin-top: 9px;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  .mom__clock {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--accent-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mom__no {
+    display: block;
+    margin-top: 10px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  /* ---------- 内容 ---------- */
+  .mom__content {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+    min-width: 0;
+  }
+
+  .mom__content:has(.mom__media) {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    column-gap: clamp(20px, 3vw, 40px);
+  }
+
+  .mom__content:has(.mom__media) .mom__body {
+    grid-column: 1;
+  }
+
+  .mom__content:has(.mom__media) .mom__media {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 2px;
+  }
+
+  .mom__content:has(.mom__media) .mom__foot {
+    grid-column: 1;
+  }
+
+  .mom__body {
+    max-width: 58ch;
+    font-size: clamp(16px, 1.45vw, 18px);
+    line-height: 1.9;
+    text-wrap: pretty;
+  }
+
+  .mom:not(:has(.mom__media)) .mom__body {
+    max-width: 46ch;
+    font-size: clamp(18px, 1.9vw, 22px);
+    line-height: 1.8;
+  }
+
+  /* ---------- 图像 ---------- */
+  .mom__media {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .mom__media--multi {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+    align-items: start;
+  }
+
+  .mom__media--multi .shot:nth-child(2) {
+    margin-top: clamp(16px, 3vw, 46px);
+  }
+
+  .mom__media--multi:has(.shot:nth-child(3)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mom__media--multi:has(.shot:nth-child(3)) .shot:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .mom__media--multi:has(.shot:nth-child(3)) .shot:nth-child(2) {
+    margin-top: 0;
+  }
+
+  .shot {
+    margin: 0;
+    min-width: 0;
+  }
+
+  .shot__frame {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-elevated);
+  }
+
+  .shot__frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--line);
+    pointer-events: none;
+  }
+
+  .shot__frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.92) contrast(1.02);
+    transition:
+      transform 0.9s var(--ease-expo),
+      filter 0.5s var(--ease-quart);
+  }
+
+  .shot:hover .shot__frame img {
+    transform: scale(1.04);
+    filter: saturate(1.08);
+  }
+
+  .shot__cap {
+    display: flex;
+    gap: 6px;
+    margin-top: 7px;
+    color: var(--text-muted);
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+
+  .shot__cap::before {
+    content: '↳';
+    color: var(--accent-text);
+  }
+
+  .shot__video {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    object-fit: cover;
+  }
+
+  /* ---------- 脚注 ---------- */
+  .mom__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding-top: 11px;
+    border-top: 1px solid var(--line);
+    color: var(--text-muted);
+    font-size: 10px;
+    min-width: 0;
+  }
+
+  .mom__place {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .mom__place svg {
+    width: 11px;
+    height: 11px;
+    fill: none;
+    stroke: var(--accent-text);
+    stroke-width: 1.6;
+    stroke-linecap: square;
+  }
+
+  .mom__from {
+    letter-spacing: 0.08em;
+  }
+
+  .mom__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    color: var(--accent-text);
+  }
+
+  .mom__link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-3) var(--ease-quart);
+  }
+
+  .mom__link:hover::after {
+    transform: scaleX(1);
+  }
+
+  .mom__link svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: square;
+  }
+
+  /* ---------- 流尾 ---------- */
+  .flow__end {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: clamp(28px, 4vw, 52px);
+    padding-top: 18px;
+    border-top: 1px solid var(--line-strong);
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .flow__end span:first-child {
+    color: var(--accent-text);
+  }
+
+  /* ---------- 响应式 ---------- */
+  @media (max-width: 900px) {
+    .flow__body {
+      --stamp-w: 70px;
+      --gutter-x: 18px;
+    }
+
+    .mom__content:has(.mom__media) {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 16px;
+    }
+
+    .mom__content:has(.mom__media) .mom__media,
+    .mom__content:has(.mom__media) .mom__body,
+    .mom__content:has(.mom__media) .mom__foot {
+      grid-column: 1;
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .flow__head {
+      position: static;
+      padding: 10px 0;
+    }
+
+    .flow__last {
+      display: none;
+    }
+
+    .flow__body {
+      --stamp-w: 0px;
+      --gutter-x: 18px;
+      margin-top: 26px;
+    }
+
+    .flow__spine {
+      left: 1px;
+    }
+
+    .mom {
+      grid-template-columns: minmax(0, 1fr);
+      padding-left: 20px;
+    }
+
+    .mom__delta {
+      display: none;
+    }
+
+    .mom__node {
+      left: 1px;
+      width: 14px;
+    }
+
+    .mom__stamp {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-right: 0;
+      text-align: left;
+    }
+
+    .mom__day {
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .mom__month,
+    .mom__clock,
+    .mom__no {
+      margin-top: 0;
+    }
+
+    .mom__stamp {
+      background: transparent;
+    }
+
+    .mom__content:has(.mom__media) {
+      row-gap: 14px;
+    }
+
+    .mom__media--multi {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .mom__media--multi .shot:nth-child(2) {
+      margin-top: 0;
+    }
+
+    .flow__end {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .flow-hero__meta {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow-hero__live i,
+    .flow__dot,
+    .flow__spine-flow {
+      animation: none;
+    }
+
+    .mom__node,
+    .shot__frame img,
+    .mom__link::after {
+      transition: none;
+    }
+  }
+</style>

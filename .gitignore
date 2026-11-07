@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.screenshots/
+.tmp-media/
+.env
+.env.*
+!.env.example
+.DS_Store
+pagefind/
