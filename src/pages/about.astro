@@ -809,12 +809,27 @@ const timeline = [
             <span class="media-head__meta mono">FEATURED + 05 · 522H</span>
           </div>
 
-          <div class="feature">
+          <div
+            class="feature"
+            data-feature
+            data-games={JSON.stringify(
+              games.map((g) => ({
+                img: g.img,
+                title: g.title,
+                sub: g.sub,
+                note: g.note,
+                hours: g.hours,
+                score: g.score,
+                platform: g.platform,
+              })),
+            )}
+          >
             <figure class="feature__hero">
               <div class="feature__frame">
-                <span class="feature__badge mono">FEATURED 01</span>
+                <span class="feature__badge mono" data-feature-badge>FEATURED 01</span>
                 <img
                   class="feature__img"
+                  data-feature-img
                   src={games[0].img}
                   alt=""
                   width="960"
@@ -824,14 +839,14 @@ const timeline = [
                 />
               </div>
               <figcaption class="feature__cap">
-                <span class="feature__idx mono">01 / 06</span>
-                <h3 class="feature__title">{games[0].title}</h3>
-                <p class="feature__sub mono">{games[0].sub}</p>
-                <p class="feature__note">{games[0].note}</p>
+                <span class="feature__idx mono" data-feature-idx>01 / 06</span>
+                <h3 class="feature__title" data-feature-title>{games[0].title}</h3>
+                <p class="feature__sub mono" data-feature-sub>{games[0].sub}</p>
+                <p class="feature__note" data-feature-note>{games[0].note}</p>
                 <div class="feature__meta mono">
-                  <span>{games[0].hours}H</span>
-                  <span>{games[0].platform}</span>
-                  <span class="feature__score">★ {games[0].score}</span>
+                  <span data-feature-hours>{games[0].hours}H</span>
+                  <span data-feature-platform>{games[0].platform}</span>
+                  <span class="feature__score" data-feature-score>★ {games[0].score}</span>
                 </div>
               </figcaption>
             </figure>
@@ -843,7 +858,15 @@ const timeline = [
               </li>
               {
                 games.slice(1).map((game, index) => (
-                  <li class="feature__row" style={`--d:${index * 60}ms`}>
+                  <li
+                    class="feature__row"
+                    style={`--d:${index * 60}ms`}
+                    data-feature-row
+                    data-index={index + 1}
+                    role="button"
+                    tabindex="0"
+                    aria-label={`查看 ${game.title}`}
+                  >
                     <span class="feature__row-num mono">0{index + 2}</span>
                     <span class="feature__row-thumb">
                       <img
@@ -1332,6 +1355,113 @@ const timeline = [
       }
     });
   });
+
+  /* ---------- 06 娱乐：游戏清单轮播 ---------- */
+  const feature = document.querySelector<HTMLElement>('[data-feature]');
+  if (feature) {
+    type GameInfo = {
+      img: string;
+      title: string;
+      sub: string;
+      note: string;
+      hours: string;
+      score: string;
+      platform: string;
+    };
+
+    const gamesData: GameInfo[] = JSON.parse(feature.dataset.games ?? '[]');
+    const rows = Array.from(feature.querySelectorAll<HTMLElement>('[data-feature-row]'));
+    const heroImg = feature.querySelector<HTMLImageElement>('[data-feature-img]');
+    const badge = feature.querySelector<HTMLElement>('[data-feature-badge]');
+    const idxEl = feature.querySelector<HTMLElement>('[data-feature-idx]');
+    const titleEl = feature.querySelector<HTMLElement>('[data-feature-title]');
+    const subEl = feature.querySelector<HTMLElement>('[data-feature-sub]');
+    const noteEl = feature.querySelector<HTMLElement>('[data-feature-note]');
+    const hoursEl = feature.querySelector<HTMLElement>('[data-feature-hours]');
+    const platformEl = feature.querySelector<HTMLElement>('[data-feature-platform]');
+    const scoreEl = feature.querySelector<HTMLElement>('[data-feature-score]');
+
+    const pad = (n: number) => String(n + 1).padStart(2, '0');
+    const total = String(gamesData.length).padStart(2, '0');
+
+    let current = 0;
+    let timer = 0;
+    let inView = true;
+
+    const show = (index: number) => {
+      const game = gamesData[index];
+      if (!game) return;
+      current = index;
+
+      if (heroImg) {
+        heroImg.src = game.img;
+        heroImg.alt = game.title;
+      }
+      if (badge) badge.textContent = `FEATURED ${pad(index)}`;
+      if (idxEl) idxEl.textContent = `${pad(index)} / ${total}`;
+      if (titleEl) titleEl.textContent = game.title;
+      if (subEl) subEl.textContent = game.sub;
+      if (noteEl) noteEl.textContent = game.note;
+      if (hoursEl) hoursEl.textContent = `${game.hours}H`;
+      if (platformEl) platformEl.textContent = game.platform;
+      if (scoreEl) scoreEl.textContent = `★ ${game.score}`;
+
+      rows.forEach((row) => {
+        const on = Number(row.dataset.index) === index;
+        row.classList.toggle('is-active', on);
+        row.setAttribute('aria-current', on ? 'true' : 'false');
+      });
+    };
+
+    const stop = () => {
+      if (timer) window.clearInterval(timer);
+      timer = 0;
+    };
+    const start = () => {
+      stop();
+      if (reduceMotion || !inView || gamesData.length < 2) return;
+      timer = window.setInterval(() => show((current + 1) % gamesData.length), 5200);
+    };
+
+    const pick = (index: number) => {
+      show(index);
+      start();
+    };
+
+    rows.forEach((row) => {
+      row.addEventListener('click', () => pick(Number(row.dataset.index)));
+      row.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          pick(Number(row.dataset.index));
+        }
+      });
+    });
+
+    feature.addEventListener('pointerenter', stop);
+    feature.addEventListener('pointerleave', start);
+    feature.addEventListener('focusin', stop);
+    feature.addEventListener('focusout', start);
+
+    const mediaSection = document.querySelector<HTMLElement>('#media');
+    if (mediaSection) {
+      const featureIO = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            inView = entry.isIntersecting;
+            if (inView) start();
+            else stop();
+          });
+        },
+        { threshold: 0.3 },
+      );
+      featureIO.observe(mediaSection);
+    } else {
+      start();
+    }
+
+    show(0);
+  }
 </script>
 
 <style>
@@ -1403,13 +1533,13 @@ const timeline = [
   .hero-index__kicker {
     margin-top: 4px;
     color: var(--text);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.26em;
   }
 
   .hero-index__cn {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.1em;
   }
 
@@ -1469,7 +1599,7 @@ const timeline = [
     padding: 0 12px;
     border-left: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.14em;
     line-height: 1.4;
   }
@@ -1504,7 +1634,7 @@ const timeline = [
     padding: 9px 14px;
     border-bottom: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -1563,7 +1693,7 @@ const timeline = [
 
   .hero-strip__item span {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.18em;
   }
 
@@ -1610,7 +1740,7 @@ const timeline = [
     padding-bottom: 12px;
     border-bottom: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.12em;
   }
 
@@ -1728,7 +1858,7 @@ const timeline = [
     padding-top: 12px;
     border-top: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.1em;
   }
 
@@ -1756,7 +1886,7 @@ const timeline = [
   }
 
   .about-rail__tag {
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.34em;
     color: var(--text-muted);
     writing-mode: vertical-rl;
@@ -1783,7 +1913,7 @@ const timeline = [
 
   .about-rail__count {
     color: var(--accent-text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.12em;
   }
 
@@ -1841,13 +1971,13 @@ const timeline = [
   .sec__kicker {
     margin-top: 4px;
     color: var(--text);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.26em;
   }
 
   .sec__cn {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.1em;
   }
 
@@ -1911,7 +2041,7 @@ const timeline = [
 
   .intro__hello {
     color: var(--accent-text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.24em;
   }
 
@@ -1942,7 +2072,7 @@ const timeline = [
     min-height: 1.7em;
     margin-top: 14px;
     color: var(--accent-text);
-    font-size: 13px;
+    font-size: var(--fs-caption);
     letter-spacing: 0.05em;
   }
 
@@ -1967,7 +2097,7 @@ const timeline = [
     padding: 5px 11px;
     border: 1px solid var(--line-strong);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.12em;
     transition:
       border-color var(--dur-3) var(--ease-quart),
@@ -1995,7 +2125,7 @@ const timeline = [
 
   .intro__quote-index {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.2em;
   }
 
@@ -2008,7 +2138,7 @@ const timeline = [
 
   .intro__quote-text {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     line-height: 2.1;
     letter-spacing: 0.18em;
   }
@@ -2041,14 +2171,14 @@ const timeline = [
 
   .profile-row__k {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
     white-space: nowrap;
   }
 
   .profile-row__v {
     color: var(--text);
-    font-size: 12px;
+    font-size: var(--fs-mono);
     text-align: right;
     line-height: 1.5;
   }
@@ -2083,7 +2213,7 @@ const timeline = [
 
   .stat-card__label {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
     line-height: 1.5;
   }
@@ -2121,7 +2251,7 @@ const timeline = [
     gap: 8px;
     margin-top: 14px;
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -2147,7 +2277,7 @@ const timeline = [
     align-items: center;
     gap: 8px;
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.22em;
   }
 
@@ -2224,7 +2354,7 @@ const timeline = [
     gap: 12px;
     margin-bottom: 8px;
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.12em;
   }
 
@@ -2282,7 +2412,7 @@ const timeline = [
     border: 1px solid var(--line);
     background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.1em;
     transition:
       color 240ms var(--ease-quart),
@@ -2308,7 +2438,7 @@ const timeline = [
     padding-bottom: 5px;
     border-bottom: 1px solid var(--line-strong);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
     transition:
       gap 300ms var(--ease-quart),
@@ -2318,7 +2448,7 @@ const timeline = [
 
   .persona__link span {
     color: var(--accent-text);
-    font-size: 11px;
+    font-size: var(--fs-micro);
   }
 
   .persona__link:hover {
@@ -2429,7 +2559,7 @@ const timeline = [
   .ps-letter {
     fill: var(--text-muted);
     font-family: var(--font-mono);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.12em;
   }
 
@@ -2477,7 +2607,7 @@ const timeline = [
     right: 16px;
     bottom: 12px;
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -2497,12 +2627,12 @@ const timeline = [
     justify-content: space-between;
     align-items: baseline;
     gap: 16px;
-    font-size: 13px;
+    font-size: var(--fs-caption);
   }
 
   .skill-bar__num {
     color: var(--accent-text);
-    font-size: 11px;
+    font-size: var(--fs-micro);
     font-variant-numeric: tabular-nums;
   }
 
@@ -2535,7 +2665,7 @@ const timeline = [
     padding-top: 14px;
     border-top: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.1em;
   }
 
@@ -2558,7 +2688,7 @@ const timeline = [
     align-items: center;
     gap: 9px;
     color: var(--text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.2em;
   }
 
@@ -2572,7 +2702,7 @@ const timeline = [
 
   .arsenal__meta {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -2594,7 +2724,7 @@ const timeline = [
     padding-bottom: 7px;
     border-bottom: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -2605,7 +2735,7 @@ const timeline = [
     height: 17px;
     border: 1px solid color-mix(in srgb, var(--ac) 55%, transparent);
     color: var(--ac);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     line-height: 1;
   }
 
@@ -2711,7 +2841,7 @@ const timeline = [
     top: 9px;
     right: 9px;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.1em;
     font-variant-numeric: tabular-nums;
     opacity: 0.35;
@@ -2788,7 +2918,7 @@ const timeline = [
 
   .arsenal__name {
     color: var(--text);
-    font-size: 11px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.1em;
     white-space: nowrap;
     transition: color 300ms var(--ease-quart);
@@ -2796,7 +2926,7 @@ const timeline = [
 
   .arsenal__role {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.18em;
     white-space: nowrap;
     opacity: 0.62;
@@ -2811,7 +2941,7 @@ const timeline = [
     gap: 8px;
     margin-top: 8px;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -2859,7 +2989,7 @@ const timeline = [
     align-items: center;
     gap: 9px;
     color: var(--text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.22em;
   }
 
@@ -2878,7 +3008,7 @@ const timeline = [
   .taste__count {
     margin-left: auto;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -3023,13 +3153,13 @@ const timeline = [
 
   .traits__label {
     color: var(--text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.22em;
   }
 
   .traits__meta {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -3070,14 +3200,14 @@ const timeline = [
   }
 
   .trait__name {
-    font-size: 13px;
+    font-size: var(--fs-caption);
     letter-spacing: 0.02em;
   }
 
   .trait__idx {
     margin-left: auto;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.14em;
     opacity: 0.6;
   }
@@ -3110,7 +3240,7 @@ const timeline = [
   .trait__note {
     margin-top: 10px;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: var(--fs-micro);
     line-height: 1.6;
     letter-spacing: 0.02em;
   }
@@ -3135,7 +3265,7 @@ const timeline = [
     align-items: center;
     gap: 9px;
     color: var(--text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.22em;
   }
 
@@ -3151,7 +3281,7 @@ const timeline = [
   .media-head__meta {
     margin-left: auto;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -3181,7 +3311,7 @@ const timeline = [
     align-items: center;
     gap: 8px;
     color: #fff;
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.18em;
     text-shadow: 0 1px 10px rgba(0, 0, 0, 0.65);
   }
@@ -3217,7 +3347,7 @@ const timeline = [
 
   .feature__idx {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -3232,7 +3362,7 @@ const timeline = [
   .feature__sub {
     margin-top: 4px;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -3252,7 +3382,7 @@ const timeline = [
     padding-top: 9px;
     border-top: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.12em;
   }
 
@@ -3269,7 +3399,7 @@ const timeline = [
     padding: 10px 0 8px;
     border-top: 1px solid var(--line-strong);
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.18em;
   }
 
@@ -3281,6 +3411,7 @@ const timeline = [
     column-gap: 10px;
     padding-block: 9px;
     border-top: 1px solid var(--line);
+    cursor: pointer;
     opacity: 0;
     translate: 0 10px;
     transition:
@@ -3310,9 +3441,20 @@ const timeline = [
 
   .feature__row:hover::after { transform: scaleX(1); }
 
+  .feature__row.is-active::after { transform: scaleX(1); }
+
+  .feature__row.is-active .feature__row-name {
+    color: var(--accent-text);
+  }
+
+  .feature__row.is-active .feature__row-thumb img {
+    filter: none;
+    scale: 1.04;
+  }
+
   .feature__row-num {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.1em;
     font-variant-numeric: tabular-nums;
   }
@@ -3357,7 +3499,7 @@ const timeline = [
 
   .feature__row-meta {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.1em;
     white-space: nowrap;
   }
@@ -3425,7 +3567,7 @@ const timeline = [
     left: 9px;
     z-index: 2;
     color: rgba(255, 255, 255, 0.62);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.12em;
     text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
   }
@@ -3456,7 +3598,7 @@ const timeline = [
     margin-top: 5px;
     overflow: hidden;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.14em;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -3470,7 +3612,7 @@ const timeline = [
     padding-top: 7px;
     border-top: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.08em;
     white-space: nowrap;
   }
@@ -3490,7 +3632,7 @@ const timeline = [
     padding: 12px 0 10px;
     border-top: 1px solid var(--line-strong);
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.2em;
   }
 
@@ -3561,7 +3703,7 @@ const timeline = [
 
   .timeline__year-tag {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.18em;
   }
 
@@ -3584,7 +3726,7 @@ const timeline = [
     align-items: baseline;
     gap: 12px;
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
   }
 
@@ -3644,7 +3786,7 @@ const timeline = [
 
   .timeline__metric {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.14em;
   }
 
@@ -3655,7 +3797,7 @@ const timeline = [
     padding-top: 14px;
     border-top: 1px solid var(--line-strong);
     color: var(--accent-text);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.22em;
   }
 
@@ -3680,13 +3822,13 @@ const timeline = [
     border-top: 1px solid var(--line-strong);
     border-bottom: 1px solid var(--line-strong);
     color: var(--text);
-    font-size: 13px;
+    font-size: var(--fs-caption);
     transition: gap 300ms var(--ease-quart), color 300ms var(--ease-quart);
   }
 
   .about-link__en {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.2em;
   }
 
@@ -3733,7 +3875,7 @@ const timeline = [
 
   .contact__label {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.22em;
   }
 
@@ -3764,7 +3906,7 @@ const timeline = [
 
   .contact__hint {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
     letter-spacing: 0.16em;
     transition: color 300ms var(--ease-quart);
   }
@@ -3777,7 +3919,7 @@ const timeline = [
     align-items: flex-end;
     gap: 10px;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     letter-spacing: 0.16em;
   }
 
@@ -3804,7 +3946,7 @@ const timeline = [
     padding-top: 10px;
     border-top: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: var(--fs-nano);
   }
 
   /* ---------- 响应式 ---------- */
@@ -3992,7 +4134,7 @@ const timeline = [
     .timeline__year-num { font-size: clamp(32px, 10vw, 44px); line-height: 1; }
     .timeline__out { display: none; }
     .timeline__title { font-size: 18px; }
-    .timeline__text { font-size: 12px; }
+    .timeline__text { font-size: var(--fs-mono); }
     .timeline__end-hint { display: none; }
 
     .contact__mail { font-size: clamp(22px, 7vw, 34px); }

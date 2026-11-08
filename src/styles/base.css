@@ -137,7 +137,7 @@ hr {
   background: var(--accent);
   color: var(--accent-ink);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-mono);
   transform: translateY(-200%);
   transition: transform var(--dur-2) var(--ease-quart);
 }

@@ -23,20 +23,25 @@
   --font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* 字号阶梯 */
-  --fs-display: clamp(40px, 6vw, 88px);
-  --fs-h1: clamp(32px, 4vw, 48px);
-  --fs-h2: clamp(26px, 3vw, 32px);
-  --fs-h3: 24px;
-  --fs-body: 17px;
-  --fs-caption: 13px;
-  --fs-mono: 12px;
+  /* 字号阶梯（参照 blog.anheyu.com：正文 16px 起，大屏最多 17px） */
+  --fs-display: clamp(38px, 5.2vw, 72px);
+  --fs-h1: clamp(30px, 3.4vw, 44px);
+  --fs-h2: clamp(24px, 2.6vw, 30px);
+  --fs-h3: 22px;
+  --fs-body: clamp(16px, calc(0.15vw + 14px), 17px);
+  --fs-caption: clamp(13px, calc(0.1vw + 12px), 14px);
+  --fs-mono: clamp(12px, calc(0.14vw + 11px), 14px);
+  /* 微型标注（序号、角标、索引标签） */
+  --fs-nano: clamp(8px, calc(0.14vw + 7px), 11px);
+  --fs-micro: clamp(10px, calc(0.14vw + 9px), 12px);
 
-  /* 版式 */
-  --page-max: 1280px;
-  --gutter: clamp(20px, 5vw, 64px);
+  /* 版式 · 容器固定 1400px（与参考站一致），留白随屏宽收敛 */
+  --page-max: 1400px;
+  --gutter: clamp(18px, 4vw, 48px);
   --header-h: 64px;
-  --prose-width: 680px;
+  /* 文章页目录列宽与正文和目录的间距 */
+  --rail-width: 260px;
+  --rail-gap: clamp(32px, 3vw, 48px);
 
   /* 动效 */
   --dur-1: 80ms;
@@ -69,4 +74,12 @@
   --warning: #f5c518;
   --paper: #ffffff;
   --ink: #0e0f12;
+}
+
+/* 手机：收紧页头高度，留白由 --gutter 的 18px 下限兜底 */
+@media (max-width: 640px) {
+  :root {
+    --header-h: 58px;
+    --fs-h3: 20px;
+  }
 }

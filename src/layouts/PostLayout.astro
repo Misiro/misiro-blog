@@ -150,6 +150,7 @@ const jsonLd = {
 
   <script>
     import '../scripts/post';
+    import '../scripts/mermaid';
   </script>
 </BaseLayout>
 
@@ -158,17 +159,13 @@ const jsonLd = {
     padding-top: clamp(36px, 6vw, 72px);
   }
 
-  .post-head {
-    max-width: 1012px;
-  }
-
   .crumbs {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
   }
 
   .crumbs a:hover {
@@ -181,9 +178,8 @@ const jsonLd = {
 
   .post-title {
     margin-top: 24px;
-    max-width: 18ch;
-    font-size: clamp(34px, 4.6vw, 56px);
-    line-height: 1.04;
+    font-size: clamp(30px, 3.6vw, 46px);
+    line-height: 1.06;
   }
 
   .post-meta {
@@ -214,7 +210,7 @@ const jsonLd = {
     padding: 3px 9px;
     border: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
     transition:
       color var(--dur-1),
       border-color var(--dur-1);
@@ -227,18 +223,17 @@ const jsonLd = {
 
   .post-grid {
     display: flex;
-    justify-content: center;
-    gap: 64px;
+    gap: var(--rail-gap);
     margin-top: clamp(36px, 5vw, 56px);
   }
 
+  /* 正文吃掉扣除目录与间距后的全部宽度，内容区总宽与 header 对齐 */
   .post-body {
-    width: 100%;
-    max-width: var(--prose-width);
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .post-foot {
-    max-width: 1012px;
     margin-top: clamp(56px, 8vw, 96px);
   }
 
@@ -247,7 +242,7 @@ const jsonLd = {
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
   }
 
   .post-nav {
@@ -306,7 +301,7 @@ const jsonLd = {
 
   .related__all {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
   }
 
   .related__all:hover {
@@ -330,7 +325,7 @@ const jsonLd = {
   .related__num,
   .related__date {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: var(--fs-micro);
   }
 
   .related__title {
@@ -352,12 +347,12 @@ const jsonLd = {
 
   .post-rss__label {
     color: var(--accent-text);
-    font-size: 10px;
+    font-size: var(--fs-micro);
   }
 
   .post-rss__text {
     margin-top: 6px;
-    font-size: 13px;
+    font-size: var(--fs-caption);
     color: var(--text-muted);
   }
 

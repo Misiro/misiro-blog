@@ -18,10 +18,10 @@ const { title = 'INDEX / 目录' } = Astro.props;
     display: none;
   }
 
-  @media (min-width: 1025px) {
+  @media (min-width: 1200px) {
     .post-aside {
       display: block;
-      width: 220px;
+      width: var(--rail-width);
       flex-shrink: 0;
     }
 
